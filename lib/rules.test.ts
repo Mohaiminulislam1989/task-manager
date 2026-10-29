@@ -95,3 +95,38 @@ test('durations never show 60 minutes', () => {
   assert.equal(fmtDur(-(2 * H + 30 * 60000)), '2h 30m');
   assert.equal(fmtDur(26 * H), '1d 2h');
 });
+
+test('working hours: only working time counts', async () => {
+  const { workMs } = await import('./hours.ts');
+  const wk = { tz: 'UTC', days: [1, 2, 3, 4, 5], start: 9 * 60, end: 18 * 60, holidays: [] as string[] };
+  const at = (s: string) => Date.parse(s + 'Z');
+  // Fri 17:00 to Mon 10:00 is one hour on Friday and one on Monday.
+  assert.equal(workMs(wk, at('2026-10-30T17:00:00'), at('2026-11-02T10:00:00')), 2 * H);
+  assert.equal(workMs(wk, at('2026-11-02T10:00:00'), at('2026-10-30T17:00:00')), -2 * H);
+  // Nights don't count; a holiday Monday doesn't either.
+  assert.equal(workMs(wk, at('2026-11-02T20:00:00'), at('2026-11-03T08:00:00')), 0);
+  assert.equal(workMs({ ...wk, holidays: ['2026-11-02'] }, at('2026-10-30T17:00:00'), at('2026-11-03T10:00:00')), 2 * H);
+  // A full week is five 9-hour days. No schedule means calendar time.
+  assert.equal(workMs(wk, at('2026-11-02T00:00:00'), at('2026-11-09T00:00:00')), 45 * H);
+  assert.equal(workMs(null, 0, 5 * H), 5 * H);
+  // Time zones: Dhaka is UTC+6, so 09:00 there is 03:00 UTC. New York crosses daylight saving on 1 Nov 2026.
+  const dhaka = { ...wk, tz: 'Asia/Dhaka', days: [0, 1, 2, 3, 4] };
+  assert.equal(workMs(dhaka, at('2026-11-01T02:00:00'), at('2026-11-01T05:00:00')), 2 * H);
+  const ny = { ...wk, tz: 'America/New_York', days: [0, 1, 2, 3, 4, 5, 6] };
+  assert.equal(workMs(ny, at('2026-10-31T13:00:00'), at('2026-11-01T15:00:00')), 9 * H + 1 * H);
+});
+
+test('working hours drive the dot, the deadline colour and day lengths', () => {
+  const at = (s: string) => Date.parse(s + 'Z');
+  const wp = { ...p, hours: { tz: 'UTC', days: [1, 2, 3, 4, 5], start: 9 * 60, end: 18 * 60, holidays: [] } };
+  const b = new Board(wp, roleIn(wp, 'pm', null));
+  // Copy is a 6 h column. Entered Fri 16:00; by Mon 12:00 that is 2 h + 3 h = 5 h, so yellow, not red.
+  const k = task('copy', { entered: at('2026-10-30T16:00:00'), started: at('2026-10-30T16:00:00'), deadline: at('2026-11-03T16:00:00') });
+  assert.equal(b.colStatus(k, at('2026-11-02T12:00:00')).lv, 'warn');
+  assert.equal(b.colStatus(k, at('2026-11-02T12:00:00')).left, 1 * H);
+  // Deadline span is 2 + 9 + 7 = 18 working hours; 5 used.
+  assert.equal(b.dlStatus(k, at('2026-11-02T12:00:00')).lv, 'ok');
+  assert.equal(b.dlStatus(k, at('2026-11-02T12:00:00')).left, 13 * H);
+  assert.equal(b.fmt(13 * H), '1d 4h');
+  assert.equal(fmtDur(13 * H), '13h 00m');
+});

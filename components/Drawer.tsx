@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { DONE, H, TODO, fmtDate, fmtDur, left, level, type AnyCol, type Board, type Level } from '@/lib/rules';
+import { DONE, H, TODO, fmtDate, level, type AnyCol, type Board, type Level } from '@/lib/rules';
 import { InlineName } from './InlineName';
 import { addComment, addTaskFiles, renameTask, getTaskDetail, removeFile, toggleSubtask, updateDetails } from '@/app/actions';
 import type { TaskDetail } from '@/lib/data';
@@ -11,10 +11,10 @@ import { AttachButton, Lightbox, PendChips, Thumb, usePending, type FileInfo } f
 import { MentionTextarea, Rich, type MentionHandle, type MentionItem } from './MentionTextarea';
 import type { BoardTask } from './ProjectView';
 
-function Meter({ title, s, sub }: { title: string; s: { lv: Level; frac: number; left: number }; sub: string }) {
+function Meter({ title, s, sub, b }: { title: string; s: { lv: Level; frac: number; left: number }; sub: string; b: Board }) {
   const pct = Math.min(100, Math.max(0, s.frac * 100));
   return <div className="box-card meter"><h3>{title}</h3>
-    <div className="big"><i className={`s-${s.lv}`} />{s.lv === 'done' ? 'Finished' : s.lv === 'todo' ? 'Not started' : s.lv === 'none' ? 'No deadline' : left(s.left)}</div>
+    <div className="big"><i className={`s-${s.lv}`} />{s.lv === 'done' ? 'Finished' : s.lv === 'todo' ? 'Not started' : s.lv === 'none' ? 'No deadline' : b.left(s.left)}</div>
     {!['done', 'todo', 'none'].includes(s.lv) && <div className="track"><span className={`s-${s.lv}`} style={{ width: `${pct}%` }} /><span className="mark80" title="80%" /></div>}
     <p>{sub}</p></div>;
 }
@@ -68,7 +68,7 @@ export function Drawer({ task: k, b, me, now, mentionItems, onClose, onMove }: {
     if (n) run(() => addTaskFiles(fd));
   };
 
-  const stintRows = detail ? [...detail.stints.map(st => ({ c: b.col(st.col), ms: st.end - st.start, live: false })), ...(!special ? [{ c, ms: now - k.entered, live: true }] : [])].filter(r => r.c) : [];
+  const stintRows = detail ? [...detail.stints.map(st => ({ c: b.col(st.col), ms: b.work(st.start, st.end), live: false })), ...(!special ? [{ c, ms: b.work(k.entered, now), live: true }] : [])].filter(r => r.c) : [];
 
   return <>
     <div className="scrim" onClick={onClose} />
@@ -81,8 +81,8 @@ export function Drawer({ task: k, b, me, now, mentionItems, onClose, onMove }: {
         <div className="d-title">
           <h2 id="dTitle">{canRename ? <InlineName value={k.title} label="task" maxLength={200} save={n => renameTask(k.id, n)} /> : k.title}</h2>
           <div className="pills">
-            <span className={`pill p-${cs.lv}`}><i className={`s-${cs.lv}`} />{c.id === 'done' ? 'Finished' : c.id === 'todo' ? 'In the backlog' : `${c.name}: ${left(cs.left)}`}</span>
-            {ds.lv !== 'done' && <span className={`pill p-${ds.lv}`}><Ic n="cal" s={13} />{ds.lv === 'none' ? 'No deadline yet' : 'Deadline: ' + left(ds.left)}</span>}
+            <span className={`pill p-${cs.lv}`}><i className={`s-${cs.lv}`} />{c.id === 'done' ? 'Finished' : c.id === 'todo' ? 'In the backlog' : `${c.name}: ${b.left(cs.left)}`}</span>
+            {ds.lv !== 'done' && <span className={`pill p-${ds.lv}`}><Ic n="cal" s={13} />{ds.lv === 'none' ? 'No deadline yet' : 'Deadline: ' + b.left(ds.left)}</span>}
             <span className="pill"><Ic n="check" s={13} />{done}/{k.subtasks.length} subtasks</span>
           </div>
         </div>
@@ -125,14 +125,14 @@ export function Drawer({ task: k, b, me, now, mentionItems, onClose, onMove }: {
                     <span className="bar-r"><span className="muted hide-sm">Notifies {special ? 'the project manager' : t?.name}</span><button className="btn primary" disabled={pending} onClick={post}><Ic n="send" s={14} />Comment</button></span></div></div></div>
                   : <p className="muted"><Ic n="lock" s={12} /> Only {special ? 'team leads' : t?.name} and the project manager can comment here.</p>}
               </> : <>
-                {stintRows.length > 0 && <div className="stints"><div className="stints-h"><span>Time in each column</span><span>Total {fmtDur(stintRows.reduce((a, r) => a + r.ms, 0))}</span></div>
+                {stintRows.length > 0 && <div className="stints"><div className="stints-h"><span>Time in each column</span><span>Total {b.fmt(stintRows.reduce((a, r) => a + r.ms, 0))}</span></div>
                   {stintRows.map((r, i) => {
                     const col = r.c!, est = col.estH * H, frac = r.ms / est, lv = r.live ? level(frac) : frac > 1 ? 'bad' : 'ok', diff = r.ms - est;
                     return <div key={i} className="stint" style={{ ['--tc' as string]: `var(${b.team(col.teamId)?.color ?? '--t6'})` }}><span className="sw" />
                       <div className="nm"><b>{col.name}</b><small>{b.team(col.teamId)?.name}{r.live ? ' · in progress' : ''}</small></div>
                       <div className="bar"><span className={`s-${lv}`} style={{ width: `${Math.min(100, frac * 100)}%` }} /></div>
-                      <div className="num"><b>{fmtDur(r.ms)}</b><small>of {col.estH} h</small></div>
-                      <span className={`tag ${lv}`}>{r.live ? (diff > 0 ? fmtDur(diff) + ' over' : fmtDur(-diff) + ' left') : diff > 0 ? fmtDur(diff) + ' over' : 'On time'}</span></div>;
+                      <div className="num"><b>{b.fmt(r.ms)}</b><small>of {col.estH} h</small></div>
+                      <span className={`tag ${lv}`}>{r.live ? (diff > 0 ? b.fmt(diff) + ' over' : b.fmt(-diff) + ' left') : diff > 0 ? b.fmt(diff) + ' over' : 'On time'}</span></div>;
                   })}</div>}
                 <h4 className="mini-h">Log</h4>
                 <ul className="timeline">{detail?.log.map((l, i) => <li key={i}>{l.who && <><b>{people[l.who]?.name}</b> · </>}{l.text}<small>{fmtDate(l.at)}</small></li>)}</ul>
@@ -148,8 +148,8 @@ export function Drawer({ task: k, b, me, now, mentionItems, onClose, onMove }: {
               {targets.filter(x => kindOf(x) === 'done').map(x => <button key={x.id} className="mv donebtn" onClick={() => onMove('done')}><Ic n="ok" s={15} />Mark done<span className="k">skips the rest of the line</span></button>)}
               {targets.filter(x => kindOf(x) === 'backlog').map(x => <button key={x.id} className="mv" onClick={() => onMove('todo')}><Ic n="left" s={15} />Back to backlog</button>)}
             </div></div>}
-            <Meter title={special ? c.name : `Time in ${c.name}`} s={cs} sub={c.id === 'done' ? `Finished ${fmtDate(k.entered)}. Clocks stopped.` : c.id === 'todo' ? `In the backlog since ${fmtDate(k.entered, true)}. The clocks start when a lead starts it.` : `Estimate ${c.estH} h · entered ${fmtDate(k.entered, true)}`} />
-            <Meter title="Overall deadline" s={ds} sub={k.deadline ? `Due ${fmtDate(k.deadline)}` : 'Set when the task is started'} />
+            <Meter title={special ? c.name : `Time in ${c.name}`} s={cs} b={b} sub={c.id === 'done' ? `Finished ${fmtDate(k.entered)}. Clocks stopped.` : c.id === 'todo' ? `In the backlog since ${fmtDate(k.entered, true)}. The clocks start when a lead starts it.` : `Estimate ${c.estH} working hours · entered ${fmtDate(k.entered, true)}`} />
+            <Meter title="Overall deadline" s={ds} b={b} sub={k.deadline ? `Due ${fmtDate(k.deadline)}` : 'Set when the task is started'} />
             <div><h3>Assignees</h3><ul className="people">{k.assignees.length ? k.assignees.map(a => <li key={a}><Av id={a} />{people[a]?.name}</li>) : <li className="muted">Nobody yet</li>}</ul></div>
             <div><h3>Details</h3><dl className="kv">{t?.leadId && <><dt>Team lead</dt><dd>{people[t.leadId]?.name}</dd></>}{!special && (c as { ownerIds: string[] }).ownerIds.length > 0 && <><dt>Column owner</dt><dd>{(c as { ownerIds: string[] }).ownerIds.map(o => people[o]?.name).join(', ')}</dd></>}<dt>Created</dt><dd>{fmtDate(k.created, true)}</dd></dl></div>
           </aside>
