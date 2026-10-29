@@ -61,6 +61,19 @@ async function notify(b: Board, v: Viewer, opts: { teams: (string | null)[]; kin
   if (to.size) await db.insert(s.notifications).values([...to].map(userId => ({ userId, projectId: b.p.id, taskId: opts.taskId, byId: v.id, kind: opts.kind, text: opts.text })));
 }
 
+// Notify specific people (e.g. about their own role or team), never the actor.
+async function notifyUsers(v: Viewer, userIds: (string | null | undefined)[], opts: { projectId: string | null; text: string; taskId?: string | null }) {
+  const to = new Set(userIds.filter((x): x is string => !!x)); to.delete(v.id);
+  if (to.size) await db.insert(s.notifications).values([...to].map(userId => ({ userId, projectId: opts.projectId, taskId: opts.taskId ?? null, byId: v.id, kind: 'update' as const, text: opts.text })));
+}
+// Everyone on a project: the manager plus every lead and member.
+async function projectPeople(projectId: string) {
+  const [p] = await db.select().from(s.projects).where(eq(s.projects.id, projectId));
+  const ts = await db.select().from(s.teams).where(eq(s.teams.projectId, projectId));
+  const ms = ts.length ? await db.select().from(s.teamMembers).where(inArray(s.teamMembers.teamId, ts.map(t => t.id))) : [];
+  return { project: p, teams: ts, ids: [p?.managerId, ...ts.map(t => t.leadId), ...ms.map(m => m.userId)] };
+}
+
 async function mentionables(b: Board, orgId: string): Promise<Mentionable[]> {
   const ps = await people(orgId);
   const ids = new Set([b.p.managerId, ...b.teams.flatMap(t => [t.leadId, ...t.memberIds]), ...ps.filter(p => isAdminRole(p.orgRole)).map(p => p.id)].filter(Boolean) as string[]);
@@ -249,6 +262,7 @@ export async function removeFile(fileId: string): Promise<Result> {
     if (!canEditTask(b, tk)) return fail('You can only remove files from tasks in your own team.');
     await db.delete(s.attachments).where(eq(s.attachments.id, fileId));
     await log(tk.id, v.id, `Removed attachment "${f.name}"`);
+    await notify(b, v, { teams: [b.cardTeam(tk)], kind: 'update', text: `${v.name} removed "${f.name}" from "${tk.title}"`, taskId: tk.id });
     return done(b.p.id, `Removed ${f.name}`);
   });
 }
@@ -390,7 +404,12 @@ export async function addPerson(form: FormData): Promise<Result & { password?: s
     const [u] = await db.insert(s.users).values({ organizationId: v.organizationId, name, email, orgRole: org as 'pm' | null, passwordHash: await bcrypt.hash(password, 10), hue: Math.floor(Math.random() * 360) }).returning();
     const pid = String(form.get('projectId') ?? ''), tid = String(form.get('teamId') ?? '');
     const [team] = tid ? await db.select().from(s.teams).where(eq(s.teams.id, tid)) : [];
-    if (team && await sameOrg(v, team.projectId, [])) await placeInTeam(u.id, tid, String(form.get('teamRole') ?? 'member') as 'lead' | 'member');
+    if (team && await sameOrg(v, team.projectId, [])) {
+      const kind = String(form.get('teamRole') ?? 'member') as 'lead' | 'member';
+      await placeInTeam(u.id, tid, kind);
+      const pp = await projectPeople(team.projectId);
+      await notifyUsers(v, pp.ids, { projectId: team.projectId, text: `${v.name} added ${name} to ${team.name} as ${kind === 'lead' ? 'team lead' : 'a member'}` });
+    }
     revalidatePath('/people');
     return { ok: true, msg: `Added ${name}`, password };
   } catch (e) { return fail(e instanceof Error ? e.message : 'Could not add that person.'); }
@@ -427,6 +446,10 @@ export async function setTeamPlacement(userId: string, teamId: string, kind: 'le
         if (kind === 'member') await db.insert(s.teamMembers).values({ teamId, userId });
       } else await db.delete(s.teamMembers).where(and(eq(s.teamMembers.teamId, teamId), eq(s.teamMembers.userId, userId)));
     } else await placeInTeam(userId, teamId, kind);
+    const [who] = await db.select({ name: s.users.name }).from(s.users).where(eq(s.users.id, userId));
+    const what = kind === 'remove' ? `removed ${who.name} from ${t.name}` : `made ${who.name} ${kind === 'lead' ? 'team lead' : 'a member'} of ${t.name}`;
+    const pp = await projectPeople(t.projectId);
+    await notifyUsers(v, [...pp.ids, userId], { projectId: t.projectId, text: `${v.name} ${what}` });
     revalidatePath('/people'); revalidatePath(`/p/${t.projectId}`);
     return { ok: true, msg: 'Saved' };
   });
@@ -441,6 +464,8 @@ export async function setOrgRole(userId: string, role: '' | 'super' | 'head' | '
     const can = assignable(v.orgRole ?? null);
     if ((u.orgRole && !can.includes(u.orgRole)) || (role && !can.includes(role))) return fail('You cannot give or take that role.');
     await db.update(s.users).set({ orgRole: role || null }).where(eq(s.users.id, userId));
+    const label = { super: 'Super admin', head: 'Head of projects', pm: 'Project manager' };
+    await notifyUsers(v, [userId], { projectId: null, text: role ? `${v.name} made you ${label[role]}` : `${v.name} removed your organisation role` });
     revalidatePath('/', 'layout');
     return { ok: true, msg: 'Role updated' };
   });
@@ -451,7 +476,10 @@ export async function setProjectManager(projectId: string, userId: string): Prom
     const v = await admin();
     const [u] = await db.select().from(s.users).where(and(eq(s.users.id, userId), eq(s.users.organizationId, v.organizationId)));
     if (!u?.orgRole) return fail('Give them the Project manager role first.');
-    await db.update(s.projects).set({ managerId: userId }).where(and(eq(s.projects.id, projectId), eq(s.projects.organizationId, v.organizationId)));
+    const before = await projectPeople(projectId);
+    if (!before.project || before.project.organizationId !== v.organizationId) return fail('That project no longer exists.');
+    await db.update(s.projects).set({ managerId: userId }).where(eq(s.projects.id, projectId));
+    await notifyUsers(v, [...before.ids, userId], { projectId, text: `${v.name} made ${u.name} the project manager of "${before.project.name}"` });
     revalidatePath('/', 'layout');
     return { ok: true, msg: `${u.name} now manages this project` };
   });
@@ -488,6 +516,7 @@ export async function createProject(draft: { name: string; manager?: string; tea
       }
       return p.id;
     });
+    await notifyUsers(v, [managerId, ...used], { projectId: id, text: `${v.name} created the project "${draft.name.trim()}" and added you to it` });
     revalidatePath('/', 'layout');
     return { ok: true, id, msg: 'Project created' };
   } catch (e) { return fail(e instanceof Error ? e.message : 'Could not create the project.'); }

@@ -7,7 +7,7 @@ import type { OrgRole, Person } from '@/lib/rules';
 import { logout, markNotificationsRead } from '@/app/actions';
 import { Av, Ic, PeopleProvider, SearchProvider, ToastProvider, relTime, useNow, useSearch } from './ui';
 
-export interface Note { id: string; projectId: string; taskId: string | null; by: string; kind: string; text: string; at: number; read: boolean }
+export interface Note { id: string; projectId: string | null; taskId: string | null; by: string; kind: string; text: string; at: number; read: boolean }
 
 export function Shell(props: { me: { id: string; name: string; orgRole: OrgRole; mustChange?: boolean }; people: Person[]; projects: { id: string; name: string }[]; notes: Note[]; canDash: boolean; isAdmin: boolean; canCreate: boolean; children: ReactNode }) {
   return <PeopleProvider people={props.people}><ToastProvider><SearchProvider><Header {...props} />{props.children}</SearchProvider></ToastProvider></PeopleProvider>;
@@ -44,7 +44,7 @@ function Header({ me, projects, notes, canDash, isAdmin, canCreate }: Parameters
     {menu && <div className="pop me-menu" role="menu"><Link href="/account" role="menuitem" onClick={() => setMenu(false)}><Ic n="user" s={15} />Account and password</Link><form action={logout}><button role="menuitem"><Ic n="out" s={15} />Sign out</button></form></div>}
     {bell && <div className="pop" id="notes" ref={pop}>
       <div className="pop-h"><h3>Notifications</h3>{unread.length > 0 && <button className="link" onClick={async () => { await markNotificationsRead('all'); router.refresh(); }}>Mark all read</button>}</div>
-      {notes.length ? <ol>{notes.map(n => <li key={n.id} onClick={async () => { setBell(false); if (!n.read) markNotificationsRead([n.id]); router.push(`/p/${n.projectId}${n.taskId ? `?task=${n.taskId}` : ''}`); }}>
+      {notes.length ? <ol>{notes.map(n => <li key={n.id} onClick={async () => { setBell(false); if (!n.read) markNotificationsRead([n.id]); router.push(n.projectId ? `/p/${n.projectId}${n.taskId ? `?task=${n.taskId}` : ''}` : '/'); }}>
         <Av id={n.by} size="lg" /><div><div className="txt">{n.text}</div><small><span className={`kind ${n.kind}`}>{n.kind === 'comment' ? 'Comment' : n.kind === 'back' ? 'Sent back' : n.kind === 'mention' ? 'Mention' : 'Update'}</span>{relTime(n.at, now)}</small></div>
         {n.read ? <span /> : <span className="unread" />}</li>)}</ol>
         : <div className="empty">You are all caught up. Comments, mentions and task updates show up here.</div>}
