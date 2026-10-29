@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { DONE, H, TODO, fmtDate, fmtDur, left, level, type AnyCol, type Board, type Level } from '@/lib/rules';
-import { addComment, addTaskFiles, getTaskDetail, removeFile, toggleSubtask, updateDetails } from '@/app/actions';
+import { InlineName } from './InlineName';
+import { addComment, addTaskFiles, renameTask, getTaskDetail, removeFile, toggleSubtask, updateDetails } from '@/app/actions';
 import type { TaskDetail } from '@/lib/data';
 import { Av, Ic, relTime, usePeople, useToast } from './ui';
 import { AttachButton, Lightbox, PendChips, Thumb, usePending, type FileInfo } from './files';
@@ -25,7 +26,7 @@ export function Drawer({ task: k, b, me, now, mentionItems, onClose, onMove }: {
   const [editing, setEditing] = useState(false);
   const [view, setView] = useState<FileInfo | null>(null);
   const [pending, start] = useTransition();
-  const cmt = useRef<MentionHandle>(null), desc = useRef<MentionHandle>(null), title = useRef<HTMLInputElement>(null);
+  const cmt = useRef<MentionHandle>(null), desc = useRef<MentionHandle>(null);
   const cPend = usePending(), dPend = usePending();
   const closeBtn = useRef<HTMLButtonElement>(null);
 
@@ -57,7 +58,7 @@ export function Drawer({ task: k, b, me, now, mentionItems, onClose, onMove }: {
     run(() => addComment(fd), () => { cmt.current!.clear(); cPend.clear(); });
   };
   const saveDetails = () => {
-    const fd = new FormData(); fd.set('taskId', k.id); fd.set('desc', desc.current!.value()); if (title.current) fd.set('title', title.current.value);
+    const fd = new FormData(); fd.set('taskId', k.id); fd.set('desc', desc.current!.value());
     dPend.files.forEach(f => fd.append('files', f));
     run(() => updateDetails(fd), () => { setEditing(false); dPend.clear(); });
   };
@@ -78,7 +79,7 @@ export function Drawer({ task: k, b, me, now, mentionItems, onClose, onMove }: {
       </div>
       <div className="d-scroll">
         <div className="d-title">
-          {editing && canRename ? <input ref={title} className="title-edit" defaultValue={k.title} aria-label="Task title" maxLength={200} /> : <h2 id="dTitle">{k.title}</h2>}
+          <h2 id="dTitle">{canRename ? <InlineName value={k.title} label="task" maxLength={200} save={n => renameTask(k.id, n)} /> : k.title}</h2>
           <div className="pills">
             <span className={`pill p-${cs.lv}`}><i className={`s-${cs.lv}`} />{c.id === 'done' ? 'Finished' : c.id === 'todo' ? 'In the backlog' : `${c.name}: ${left(cs.left)}`}</span>
             {ds.lv !== 'done' && <span className={`pill p-${ds.lv}`}><Ic n="cal" s={13} />{ds.lv === 'none' ? 'No deadline yet' : 'Deadline: ' + left(ds.left)}</span>}
@@ -87,7 +88,7 @@ export function Drawer({ task: k, b, me, now, mentionItems, onClose, onMove }: {
         </div>
         <div className="d-grid">
           <div className="d-main">
-            <section><div className="sec-h"><h3>Description</h3>{editable && !editing && <button className="link" onClick={() => setEditing(true)}>{canRename ? 'Edit title and description' : 'Edit description'}</button>}</div>
+            <section><div className="sec-h"><h3>Description</h3>{editable && !editing && <button className="link" onClick={() => setEditing(true)}>Edit description</button>}</div>
               {editing ? <>
                 <div className="composer solo"><div className="box"><MentionTextarea ref={desc} items={mentionItems} defaultValue={k.desc} placeholder="What needs doing. Type @ to mention a person or team." autoFocus />
                   <div className="bar"><span className="ctools"><AttachButton id="file-desc" onPick={l => dPend.add(l, toast)} /><button type="button" className="tool" onClick={() => desc.current?.insertAt()} title="Mention"><Ic n="at" /><span className="sr">Mention</span></button></span>

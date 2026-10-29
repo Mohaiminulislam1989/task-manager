@@ -656,8 +656,6 @@ dialog::backdrop { background: rgba(10,14,20,.45) }
 .views a.on { background: var(--surface); color: var(--ink); box-shadow: var(--shadow-1) }
 .col-title { min-width: 0; max-width: 100%; font: inherit; color: inherit; padding: 1px 4px; margin: -1px -4px; border-radius: 5px; cursor: text; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block }
 .col-title:hover { background: var(--raised); box-shadow: inset 0 0 0 1px var(--line) }
-.title-edit { width: 100%; margin: 0 0 10px; font: inherit; font-size: 21px; font-weight: 600; letter-spacing: -.015em; line-height: 1.25; padding: 4px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink) }
-.title-edit:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent) }
 .lb-wrap { position: fixed; inset: 0; z-index: 80; background: rgba(5,8,12,.8); display: grid; place-items: center; padding: 12px; animation: fade .15s ease }
 .lb-wrap .lightbox { display: flex; border: 1px solid #2a323c; border-radius: 12px; overflow: hidden }
 .creds { display: flex; flex-direction: column; gap: 10px; background: var(--raised); border: 1px solid var(--line); border-radius: 10px; padding: 14px }
@@ -667,3 +665,5 @@ a.plain { color: inherit; text-decoration: none } a.plain:hover { text-decoratio
 a.btn, a.icon-btn { text-decoration: none } a.btn { color: var(--ink) }
 a.logo { color: inherit; text-decoration: none }
 h1 .col-title, h2 .col-title { display: inline; white-space: normal; overflow: visible; text-align: left; font-weight: inherit; letter-spacing: inherit; line-height: inherit }
+.inline-name { font: inherit; font-weight: inherit; letter-spacing: inherit; color: var(--ink); width: 100%; min-width: 120px; padding: 1px 6px; margin: -2px -7px; border: 1px solid var(--accent); border-radius: 6px; background: var(--surface); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); outline: none }
+.col-name h3:has(.inline-name) { flex: 1; overflow: visible }

@@ -203,17 +203,29 @@ export async function updateDetails(form: FormData): Promise<Result> {
   return guard(async () => {
     const { v, board: b, tk } = await loadTask(String(form.get('taskId')));
     if (!canEditTask(b, tk)) return fail('You can only edit tasks in your own team.');
-    const desc = String(form.get('desc') ?? '').trim();
-    const title = String(form.get('title') ?? tk.title).trim() || tk.title;
-    if (title !== tk.title && !b.canRenameTask(tk)) return fail('Only the team lead or the project manager can rename this task.');
-    const changed = desc !== tk.desc || title !== tk.title;
-    if (changed) await db.update(s.tasks).set({ description: desc, title }).where(eq(s.tasks.id, tk.id));
+    const desc = String(form.get('desc') ?? '').trim(), title = tk.title;
+    const changed = desc !== tk.desc;
+    if (changed) await db.update(s.tasks).set({ description: desc }).where(eq(s.tasks.id, tk.id));
     const files = await saveFiles(form, 'files', tk.id, v.id);
     if (changed) await log(tk.id, v.id, 'Edited the details');
     for (const f of files) await log(tk.id, v.id, `Attached "${f.name}"`);
     if (changed || files.length) await notify(b, v, { teams: [b.cardTeam(tk)], kind: 'update', text: `${v.name} updated the details of "${title}"`, taskId: tk.id });
     const n = changed && desc !== tk.desc ? await notifyMentions(b, v, { id: tk.id, title }, desc, 'the task details') : 0;
     return done(b.p.id, n ? `Saved, ${n} mention${n > 1 ? 's' : ''} notified` : 'Saved');
+  });
+}
+
+export async function renameTask(taskId: string, name: string): Promise<Result> {
+  return guard(async () => {
+    const { v, board: b, tk } = await loadTask(taskId);
+    if (!b.canRenameTask(tk)) return fail('Only the team lead or the project manager can rename this task.');
+    const n = name.trim().slice(0, 200);
+    if (!n) return fail('Give the task a title.');
+    if (n === tk.title) return { ok: true, msg: 'Saved' };
+    await db.update(s.tasks).set({ title: n }).where(eq(s.tasks.id, tk.id));
+    await log(tk.id, v.id, `Renamed from "${tk.title}"`);
+    await notify(b, v, { teams: [b.cardTeam(tk)], kind: 'update', text: `${v.name} renamed "${tk.title}" to "${n}"`, taskId: tk.id });
+    return done(b.p.id, 'Task renamed');
   });
 }
 
