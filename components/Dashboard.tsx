@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
-import { Board, fmtDate, left, type Column, type ProjectShape, type Task } from '@/lib/rules';
+import { Board, fmtDate, type Column, type ProjectShape, type Task } from '@/lib/rules';
 import { Av, Ic, useNow, usePeople } from './ui';
 
 type Status = 'overdue' | 'risk' | 'ontime' | 'done' | 'backlog';
@@ -13,7 +13,7 @@ const ORDER: Status[] = ['overdue', 'risk', 'ontime', 'done', 'backlog'];
 const BACKLOG_T = { id: '__backlog', name: 'Backlog', color: '--t6' };
 
 type P = ProjectShape & { archived: Column[] };
-interface Row { p: P; k: Task; where: string; special: boolean; t: { id: string; name: string; color: string }; status: Status; left: number }
+interface Row { p: P; k: Task; where: string; special: boolean; t: { id: string; name: string; color: string }; status: Status; left: number; leftTxt: string }
 const count = (list: Row[]) => list.reduce((a, r) => (a[r.status] = (a[r.status] ?? 0) + 1, a), {} as Partial<Record<Status, number>>);
 
 function StackBar({ list }: { list: Row[] }) {
@@ -38,7 +38,7 @@ export function Dashboard({ admin, canCreate, projects, tasks }: { admin: boolea
       const t = k.col === 'todo' ? BACKLOG_T : b.team(special ? k.lastTeam : c.teamId) ?? BACKLOG_T;
       const ds = b.dlStatus(k, now);
       const status: Status = k.col === 'todo' ? 'backlog' : k.col === 'done' ? 'done' : ds.lv === 'bad' ? 'overdue' : ds.lv === 'warn' ? 'risk' : 'ontime';
-      return { p, k, where: special ? c.name : `${t.name} / ${c.name}`, special, t, status, left: ds.left };
+      return { p, k, where: special ? c.name : `${t.name} / ${c.name}`, special, t, status, left: ds.left, leftTxt: b.left(ds.left) };
     });
   }, [projects, tasks, now]);
 
@@ -103,7 +103,7 @@ export function Dashboard({ admin, canCreate, projects, tasks }: { admin: boolea
             <td><Link href={`/p/${r.p.id}?task=${r.k.id}`} onClick={e => e.stopPropagation()} className="plain"><b>{r.k.title}</b></Link>{multi && <small>{r.p.name}</small>}</td>
             <td><span className="where" style={{ ['--tc' as string]: `var(${r.t.color})` }}><span className="team-swatch" />{r.where}</span></td>
             <td><span className="avs">{r.k.assignees.map(a => <Av key={a} id={a} size="sm" />)}</span> {r.k.assignees.map(a => people[a]?.name).join(', ')}</td>
-            <td className="mono">{r.k.deadline ? fmtDate(r.k.deadline, true) : 'No deadline'}{r.k.deadline && r.status !== 'done' && r.status !== 'backlog' && <small className={r.left < 0 ? 'hot' : ''}>{left(r.left)}</small>}</td>
+            <td className="mono">{r.k.deadline ? fmtDate(r.k.deadline, true) : 'No deadline'}{r.k.deadline && r.status !== 'done' && r.status !== 'backlog' && <small className={r.left < 0 ? 'hot' : ''}>{r.leftTxt}</small>}</td>
             <td><StChip s={r.status} /></td></tr>)
             : <tr><td colSpan={5} className="muted">No tasks match these filters.</td></tr>}
         </tbody></table></div></section>

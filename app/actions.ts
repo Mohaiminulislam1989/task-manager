@@ -9,7 +9,8 @@ import { db, schema as s } from '@/db';
 import { currentUser, endSession, requireUser, startSession, type Viewer } from '@/lib/auth';
 import { boardFor, people, taskDetail, tasksFor } from '@/lib/data';
 import { storeFile } from '@/lib/files';
-import { SWATCHES, assignable, Board, fmtDur, isAdminRole, mentionsIn, type Column, type Mentionable, type Task } from '@/lib/rules';
+import { WEEKDAYS, hhmm, validZone, type WorkHours } from '@/lib/hours';
+import { SWATCHES, assignable, Board, isAdminRole, mentionsIn, type Column, type Mentionable, type Task } from '@/lib/rules';
 
 type Result = { ok: true; msg?: string } | { ok: false; error: string };
 const fail = (error: string): Result => ({ ok: false, error });
@@ -128,7 +129,7 @@ export async function moveTask(form: FormData): Promise<Result> {
     }
     const from = b.col(tk.col)!, to = b.col(toId)!, now = new Date();
     const fromTeam = from.teamId, toTeam = to.teamId;
-    const spent = now.getTime() - tk.entered;
+    const spent = b.work(tk.entered, now.getTime());
     if (!('special' in from && from.special)) await db.insert(s.stints).values({ taskId: tk.id, columnId: from.id, startedAt: new Date(tk.entered), endedAt: now });
     await db.update(s.tasks).set({
       stage: toId === 'todo' ? 'todo' : toId === 'done' ? 'done' : 'line',
@@ -146,7 +147,7 @@ export async function moveTask(form: FormData): Promise<Result> {
     if (rule.kind === 'backlog') text = 'Moved back to the backlog';
     if (rule.kind === 'handover') text = `Handed over from ${tName(fromTeam)} to ${tName(toTeam)} (${to.name})`;
     if (rule.kind === 'back') text = `Sent back to ${tName(toTeam)} (${to.name}) for review`;
-    if (!('special' in from && from.special)) text += ` after ${fmtDur(spent)} in ${from.name}`;
+    if (!('special' in from && from.special)) text += ` after ${b.fmt(spent)} in ${from.name}`;
     await log(tk.id, v.id, note ? `${text}. Reason: "${note}"` : text);
     if (rule.needsDeadline) await log(tk.id, v.id, `Set the deadline`);
     if (note) {
@@ -520,4 +521,23 @@ export async function createProject(draft: { name: string; manager?: string; tea
     revalidatePath('/', 'layout');
     return { ok: true, id, msg: 'Project created' };
   } catch (e) { return fail(e instanceof Error ? e.message : 'Could not create the project.'); }
+}
+
+// ---------- working hours ----------
+export async function saveWorkHours(h: WorkHours): Promise<Result> {
+  return guard(async () => {
+    const v = await requireUser();
+    if (v.orgRole !== 'super') return fail('Only the Super admin can change working hours.');
+    const days = [...new Set(h.days)].filter(d => Number.isInteger(d) && d >= 0 && d <= 6).sort();
+    const holidays = [...new Set(h.holidays)].filter(d => /^\d{4}-\d{2}-\d{2}$/.test(d)).sort();
+    const start = Math.round(h.start), end = Math.round(h.end);
+    if (!validZone(h.tz)) return fail('Pick a valid time zone.');
+    if (!days.length) return fail('Pick at least one working day.');
+    if (!(start >= 0 && end <= 1440 && end > start)) return fail('The working day must end after it starts.');
+    await db.update(s.organizations).set({ workHours: { tz: h.tz, days, start, end, holidays } }).where(eq(s.organizations.id, v.organizationId));
+    const everyone = await db.select({ id: s.users.id }).from(s.users).where(eq(s.users.organizationId, v.organizationId));
+    await notifyUsers(v, everyone.map(u => u.id), { projectId: null, text: `${v.name} changed the working hours to ${days.map(d => WEEKDAYS[d].slice(0, 3)).join(', ')}, ${hhmm(start)} to ${hhmm(end)} (${h.tz})` });
+    revalidatePath('/', 'layout');
+    return { ok: true, msg: 'Working hours saved' };
+  });
 }

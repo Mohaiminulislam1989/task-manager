@@ -1,4 +1,5 @@
-import { pgTable, pgEnum, uuid, text, integer, boolean, timestamp, primaryKey, index, bigint } from 'drizzle-orm/pg-core';
+import { pgTable, pgEnum, uuid, text, integer, boolean, timestamp, primaryKey, index, bigint, jsonb } from 'drizzle-orm/pg-core';
+import { DEFAULT_HOURS, type WorkHours } from '../lib/hours';
 
 // Every row carries organization_id (directly or through its project) so multi-tenancy can be added later.
 
@@ -13,6 +14,8 @@ const at = (name: string) => timestamp(name, { withTimezone: true, mode: 'date' 
 export const organizations = pgTable('organizations', {
   id: id(),
   name: text('name').notNull(),
+  // Working hours every board clock counts in. Set by the Super admin.
+  workHours: jsonb('work_hours').$type<WorkHours>().notNull().default(DEFAULT_HOURS),
   createdAt: at('created_at').notNull().defaultNow(),
 });
 

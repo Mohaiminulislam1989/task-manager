@@ -41,7 +41,7 @@ function Header({ me, projects, notes, canDash, isAdmin, canCreate }: Parameters
       <button className="icon-btn" id="bellBtn" aria-label={`Notifications${unread.length ? `, ${unread.length} unread` : ''}`} onClick={() => setBell(x => !x)}><Ic n="bell" s={19} />{unread.length > 0 && <span className="count">{unread.length}</span>}</button>
       <button className="me" onClick={() => setMenu(x => !x)} aria-haspopup="menu" aria-expanded={menu}><Av id={me.id} size="sm" /><span className="me-name">{me.name} · {roleLabel}</span></button>
     </div></header>
-    {menu && <div className="pop me-menu" role="menu"><Link href="/account" role="menuitem" onClick={() => setMenu(false)}><Ic n="user" s={15} />Account and password</Link><form action={logout}><button role="menuitem"><Ic n="out" s={15} />Sign out</button></form></div>}
+    {menu && <div className="pop me-menu" role="menu"><Link href="/account" role="menuitem" onClick={() => setMenu(false)}><Ic n="user" s={15} />Account and password</Link><Link href="/hours" role="menuitem" onClick={() => setMenu(false)}><Ic n="clock" s={15} />Working hours</Link><form action={logout}><button role="menuitem"><Ic n="out" s={15} />Sign out</button></form></div>}
     {bell && <div className="pop" id="notes" ref={pop}>
       <div className="pop-h"><h3>Notifications</h3>{unread.length > 0 && <button className="link" onClick={async () => { await markNotificationsRead('all'); router.refresh(); }}>Mark all read</button>}</div>
       {notes.length ? <ol>{notes.map(n => <li key={n.id} onClick={async () => { setBell(false); if (!n.read) markNotificationsRead([n.id]); router.push(n.projectId ? `/p/${n.projectId}${n.taskId ? `?task=${n.taskId}` : ''}` : '/'); }}>

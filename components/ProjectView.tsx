@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useState, useTransition } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Board, DONE, TODO, fmtDate, left, roleIn, type AnyCol, type Column, type OrgRole, type ProjectShape, type Task } from '@/lib/rules';
+import { Board, DONE, TODO, fmtDate, roleIn, type AnyCol, type Column, type OrgRole, type ProjectShape, type Task } from '@/lib/rules';
 import { moveTask, renameColumn, renameProject, renameTeam } from '@/app/actions';
 import { Av, Avs, Ic, useNow, usePeople, useSearch, useToast } from './ui';
 import { Drawer } from './Drawer';
@@ -81,8 +82,8 @@ export function ProjectView({ snap, initialTask }: { snap: Snapshot; initialTask
     return <article key={k.id} className={`card ${cs.lv === 'done' ? 'done' : cs.lv === 'todo' ? 'todo' + (ds.lv === 'none' ? '' : ' bg-' + ds.lv) : 'bg-' + ds.lv} ${matches(k) ? '' : 'dim'} ${dragId === k.id ? 'dragging' : ''}`}
       draggable={canDrag} tabIndex={0} aria-label={k.title} onClick={() => setOpen(k.id)} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(k.id); } }}
       onDragStart={e => { setDragId(k.id); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', k.id); }} onDragEnd={() => setDragId(null)}>
-      <span className={`dot s-${cs.lv}`} title={cs.lv === 'done' ? 'Finished' : cs.lv === 'todo' ? 'Not started' : left(cs.left) + ' in this column'} />
-      <span className={`timer t-${cs.lv}`}>{cs.lv === 'done' ? <><Ic n="ok" s={13} />Finished {fmtDate(k.entered, true).split(',')[0]}</> : cs.lv === 'todo' ? 'Not started' : <><Ic n="clock" s={13} />{left(cs.left)}</>}</span>
+      <span className={`dot s-${cs.lv}`} title={cs.lv === 'done' ? 'Finished' : cs.lv === 'todo' ? 'Not started' : b.left(cs.left) + ' in this column'} />
+      <span className={`timer t-${cs.lv}`}>{cs.lv === 'done' ? <><Ic n="ok" s={13} />Finished {fmtDate(k.entered, true).split(',')[0]}</> : cs.lv === 'todo' ? 'Not started' : <><Ic n="clock" s={13} />{b.left(cs.left)}</>}</span>
       <h4>{k.title}</h4>
       <div className="c-meta">
         <span className={`m ${ds.lv === 'bad' ? 'bad' : ''}`} title="Overall deadline"><Ic n="cal" s={13} />{k.deadline ? fmtDate(k.deadline, true).split(',')[0] : 'No deadline'}</span>
@@ -126,6 +127,7 @@ export function ProjectView({ snap, initialTask }: { snap: Snapshot; initialTask
       <div className="legend">
         <span><i className="s-ok" /><i className="s-warn" /><i className="s-bad" /> Dot: time in the current column, yellow at 80%, red when over</span>
         <span><b style={{ background: 'color-mix(in srgb,var(--ok) 7%,var(--surface))' }} /><b style={{ background: 'color-mix(in srgb,var(--warn) 13%,var(--surface))' }} /><b style={{ background: 'color-mix(in srgb,var(--bad) 10%,var(--surface))' }} /> Card color: time to the overall deadline</span>
+        <span className="muted">Counted in <Link href="/hours" className="link">working hours</Link></span>
       </div>
     </section>
 
@@ -151,7 +153,7 @@ export function ProjectView({ snap, initialTask }: { snap: Snapshot; initialTask
               <div className="col-head"><div className="col-name">
                 {b.canEditCols(t.id) ? <h3><InlineName value={c.name} label="column" maxLength={40} save={n => renameColumn(c.id, n)} /></h3> : <h3>{c.name}</h3>}
                 <span className="n-badge">{cards.length}</span></div>
-                <span className="col-r"><span className="est"><Ic n="clock" s={12} />{c.estH} h</span>
+                <span className="col-r"><span className="est" title={`Estimate: ${c.estH} working hours`}><Ic n="clock" s={12} />{c.estH} h</span>
                   {b.canEditCols(t.id) && cols.length > 1 && <button className={`col-x ${cards.length ? 'busy' : ''}`} aria-label={`Remove column ${c.name}`} title={cards.length ? 'Move its cards out first' : 'Remove empty column'}
                     onClick={() => cards.length ? toast(`${c.name} still has ${cards.length} card${cards.length > 1 ? 's' : ''}. Move ${cards.length > 1 ? 'them' : 'it'} out first.`) : setDialog({ kind: 'rmcol', col: c })}><Ic n="trash" s={14} /></button>}</span></div>
               {c.ownerIds.length > 0 && <div className="owners"><Avs ids={c.ownerIds} />{c.ownerIds.map(o => people[o]?.name).join(', ')}</div>}
@@ -231,8 +233,8 @@ function ListView({ snap, b, now, matches, onOpen, onMove, onAdd }: { snap: Snap
                 <span className="lmeta">{k.subtasks.length > 0 && <span><Ic n="check" s={12} />{done}/{k.subtasks.length}</span>}{k.commentCount > 0 && <span><Ic n="chat" s={12} />{k.commentCount}</span>}{k.fileCount > 0 && <span><Ic n="clip" s={12} />{k.fileCount}</span>}</span></div></div>
               <div className="lc stage" role="cell" style={{ ['--tc' as string]: `var(${t?.color ?? '--t6'})` }}><span className="sw" /><span className="st-txt"><b>{c.name}</b><small>{'special' in c && c.special ? (c.id === 'todo' ? 'Backlog' : 'Finished') : t?.name}</small></span>
                 {targets.length > 0 && <select className="lmove" aria-label={`Move ${k.title}`} value="" onChange={e => { if (e.target.value) onMove(k, e.target.value); }}><option value="">Move…</option>{targets.map(x => <option key={x.id} value={x.id}>{moveLabel(k, x)}</option>)}</select>}</div>
-              <div className={`lc time t-${cs.lv}`} role="cell"><span className="lbl">In column</span>{cs.lv === 'done' ? 'Finished' : cs.lv === 'todo' ? 'Not started' : <><Ic n="clock" s={12} />{left(cs.left)}</>}</div>
-              <div className={`lc ldue d-${ds.lv}`} role="cell"><span className="lbl">Deadline</span>{k.deadline ? <><span>{fmtDate(k.deadline, true)}</span>{ds.lv !== 'done' && ds.lv !== 'none' && <small>{left(ds.left)}</small>}</> : <span className="muted">No deadline</span>}</div>
+              <div className={`lc time t-${cs.lv}`} role="cell"><span className="lbl">In column</span>{cs.lv === 'done' ? 'Finished' : cs.lv === 'todo' ? 'Not started' : <><Ic n="clock" s={12} />{b.left(cs.left)}</>}</div>
+              <div className={`lc ldue d-${ds.lv}`} role="cell"><span className="lbl">Deadline</span>{k.deadline ? <><span>{fmtDate(k.deadline, true)}</span>{ds.lv !== 'done' && ds.lv !== 'none' && <small>{b.left(ds.left)}</small>}</> : <span className="muted">No deadline</span>}</div>
               <div className="lc who" role="cell"><Avs ids={k.assignees} />{k.assignees.length === 1 ? <span className="nm">{people[k.assignees[0]]?.name}</span> : k.assignees.length ? null : <span className="muted">Nobody</span>}</div>
             </div>;
           }) : <div className="lempty muted">No tasks</div>)}

@@ -1,6 +1,8 @@
 // Pure board rules shared by the server (enforcement) and the browser (what to show).
 // Mirrors the agreed prototype: team-owned columns in line order, plus shared To do and Done lanes.
 
+import { dayHours, workMs, type WorkHours } from './hours.ts';
+
 export const H = 3600e3;
 export const D = 24 * H;
 
@@ -18,7 +20,8 @@ export interface Task {
   created: number; entered: number; started: number | null; deadline: number | null;
   assignees: string[]; lastTeam: string | null; subtasks: Subtask[];
 }
-export interface ProjectShape { id: string; name: string; managerId: string; teams: Team[]; columns: Column[] }
+// hours: the organisation's working hours; every clock counts only working time. Missing means calendar time.
+export interface ProjectShape { id: string; name: string; managerId: string; teams: Team[]; columns: Column[]; hours?: WorkHours | null }
 
 export interface LaneCol { id: 'todo' | 'done'; name: string; todo?: true; final?: true; special: true; teamId: null; estH: 0; ownerIds: [] }
 export const TODO: LaneCol = { id: 'todo', name: 'To do', todo: true, special: true, teamId: null, estH: 0, ownerIds: [] };
@@ -109,31 +112,38 @@ export class Board {
     return { ok: false, why: 'Cards move one team at a time.' };
   }
 
+  // Working time between two instants, and durations written in working days ("1d" is one working day).
+  work(a: number, b: number) { return workMs(this.p.hours, a, b); }
+  get dayH() { return dayHours(this.p.hours); }
+  fmt(ms: number) { return fmtDur(ms, this.dayH); }
+  left(ms: number) { return left(ms, this.dayH); }
+
   colStatus(tk: Task, now: number) {
     const c = this.col(tk.col)!;
     if ('final' in c && c.final) return { lv: 'done' as Level, frac: 0, left: 0 };
     if ('todo' in c && c.todo) return { lv: 'todo' as Level, frac: 0, left: 0 };
-    const used = now - tk.entered, budget = c.estH * H;
+    const used = this.work(tk.entered, now), budget = c.estH * H;
     return { lv: level(used / budget), frac: used / budget, left: budget - used };
   }
   dlStatus(tk: Task, now: number) {
     if (tk.col === 'done') return { lv: 'done' as Level, frac: 0, left: 0 };
     if (!tk.deadline) return { lv: 'none' as Level, frac: 0, left: 0 };
-    const from = tk.started ?? tk.created, span = tk.deadline - from, used = now - from;
-    return { lv: now > tk.deadline ? 'bad' as Level : level(used / span), frac: used / span, left: tk.deadline - now };
+    const from = tk.started ?? tk.created, span = this.work(from, tk.deadline), used = this.work(from, now);
+    const frac = span > 0 ? used / span : now >= tk.deadline ? 1 : 0;
+    return { lv: now > tk.deadline ? 'bad' as Level : level(frac), frac, left: this.work(now, tk.deadline) };
   }
 }
 
 export const level = (frac: number): Level => frac >= 1 ? 'bad' : frac >= 0.8 ? 'warn' : 'ok';
 
-export function fmtDur(ms: number) {
-  // Round to whole minutes first so 59.6 minutes never shows as "60m".
-  const mins = Math.round(Math.abs(ms) / 60000), d = Math.floor(mins / 1440), h = Math.floor((mins % 1440) / 60), m = mins % 60;
+export function fmtDur(ms: number, dayH = 24) {
+  // Round to whole minutes first so 59.6 minutes never shows as "60m". A day is dayH hours (a working day on the board).
+  const day = Math.round(dayH * 60), mins = Math.round(Math.abs(ms) / 60000), d = Math.floor(mins / day), h = Math.floor((mins % day) / 60), m = mins % 60;
   if (d) return `${d}d ${h}h`;
   if (h) return `${h}h ${String(m).padStart(2, '0')}m`;
   return `${m}m`;
 }
-export const left = (ms: number) => ms >= 0 ? `${fmtDur(ms)} left` : `${fmtDur(ms)} over`;
+export const left = (ms: number, dayH = 24) => ms >= 0 ? `${fmtDur(ms, dayH)} left` : `${fmtDur(ms, dayH)} over`;
 export function fmtDate(ms: number, short = false) {
   const d = new Date(ms);
   const day = d.toLocaleDateString('en-GB', { weekday: short ? undefined : 'short', day: 'numeric', month: 'short' });
@@ -158,3 +168,4 @@ export function mentionsIn(text: string, items: Mentionable[]) {
   for (const m of text.matchAll(re)) { const it = items.find(x => x.name === m[1]); if (it && !out.includes(it)) out.push(it); }
   return out;
 }
+export type { WorkHours } from './hours.ts';

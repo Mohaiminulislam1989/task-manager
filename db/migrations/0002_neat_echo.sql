@@ -1,0 +1,1 @@
+ALTER TABLE "organizations" ADD COLUMN "work_hours" jsonb DEFAULT '{"tz":"UTC","days":[1,2,3,4,5],"start":540,"end":1080,"holidays":[]}'::jsonb NOT NULL;

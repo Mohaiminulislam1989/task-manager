@@ -12,6 +12,7 @@ export async function people(orgId: string): Promise<Person[]> {
 export async function projectShapes(orgId: string, ids?: string[]): Promise<(ProjectShape & { archived: Column[] })[]> {
   const ps = await db.select().from(s.projects).where(ids ? and(eq(s.projects.organizationId, orgId), inArray(s.projects.id, ids)) : eq(s.projects.organizationId, orgId)).orderBy(asc(s.projects.createdAt));
   if (!ps.length) return [];
+  const [org] = await db.select({ hours: s.organizations.workHours }).from(s.organizations).where(eq(s.organizations.id, orgId));
   const pids = ps.map(p => p.id);
   const ts = await db.select().from(s.teams).where(inArray(s.teams.projectId, pids));
   const tids = ts.map(t => t.id);
@@ -21,7 +22,7 @@ export async function projectShapes(orgId: string, ids?: string[]): Promise<(Pro
   return ps.map(p => {
     const teams = ts.filter(t => t.projectId === p.id).map(t => ({ id: t.id, name: t.name, color: t.color, lineOrder: t.lineOrder, leadId: t.leadId, memberIds: tm.filter(m => m.teamId === t.id).map(m => m.userId) }));
     const all = cs.filter(c => teams.some(t => t.id === c.teamId)).map(c => ({ id: c.id, teamId: c.teamId, name: c.name, position: c.position, estH: c.estimateMinutes / 60, ownerIds: co.filter(o => o.columnId === c.id).map(o => o.userId), archived: !!c.archivedAt }));
-    return { id: p.id, name: p.name, managerId: p.managerId, teams, columns: all.filter(c => !c.archived), archived: all.filter(c => c.archived) };
+    return { id: p.id, name: p.name, managerId: p.managerId, hours: org?.hours ?? null, teams, columns: all.filter(c => !c.archived), archived: all.filter(c => c.archived) };
   });
 }
 

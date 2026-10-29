@@ -15,6 +15,13 @@
       "when": 1793264515071,
       "tag": "0001_dizzy_ultimates",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793265118113,
+      "tag": "0002_neat_echo",
+      "breakpoints": true
     }
   ]
 }

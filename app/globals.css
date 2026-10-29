@@ -667,3 +667,20 @@ a.logo { color: inherit; text-decoration: none }
 h1 .col-title, h2 .col-title { display: inline; white-space: normal; overflow: visible; text-align: left; font-weight: inherit; letter-spacing: inherit; line-height: inherit }
 .inline-name { font: inherit; font-weight: inherit; letter-spacing: inherit; color: var(--ink); width: 100%; min-width: 120px; padding: 1px 6px; margin: -2px -7px; border: 1px solid var(--accent); border-radius: 6px; background: var(--surface); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); outline: none }
 .col-name h3:has(.inline-name) { flex: 1; overflow: visible }
+
+/* Working hours */
+.hours-body { padding: 16px; display: flex; flex-direction: column; gap: 16px }
+.hours-note { display: flex; align-items: center; gap: 6px; margin: 0 }
+.field .link { align-self: flex-start; margin-top: 2px }
+fieldset.field { border: 0; margin: 0; padding: 0; min-width: 0 }
+fieldset.field legend { font-size: 12.5px; font-weight: 600; color: var(--ink-2); padding: 0; margin-bottom: 5px }
+.day-row { display: flex; flex-wrap: wrap; gap: 6px }
+.day { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; font-size: 13px; cursor: pointer; background: var(--surface) }
+.day.on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--surface)); font-weight: 600 }
+.day input { accent-color: var(--accent); margin: 0 }
+.day:has(input:disabled) { cursor: default }
+.day:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px }
+.hol-add { display: flex; align-items: flex-end; gap: 8px; flex-wrap: wrap } .hol-add .field { flex: 1 1 180px }
+.hol-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 8px }
+.hol-list li { display: flex; justify-content: space-between; align-items: center; padding: 6px 6px 6px 12px; font-size: 13px }
+.hol-list li + li { border-top: 1px solid var(--line) }
