@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useTransition, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Board, Column } from '@/lib/rules';
-import { addColumn, createTask, moveTask, removeColumn, renameColumn, renameProject, renameTeam } from '@/app/actions';
+import { addColumn, createTask, moveTask, removeColumn } from '@/app/actions';
 import { Av, Ic, toLocalInput, usePeople, useToast } from './ui';
 import { AttachButton, MAX_MB, PendChips, usePending } from './files';
 import { MentionTextarea, type MentionHandle, type MentionItem } from './MentionTextarea';
@@ -102,24 +102,6 @@ export function AddColumnDialog({ b, teamId, onClose }: { b: Board; teamId: stri
       <div className="field"><span className="flabel">Responsible (optional)</span><div className="ownpick">{crew.map(p => <label key={p} className="ownopt"><input type="checkbox" name="owners" value={p} /><Av id={p} size="sm" />{people[p]?.name}</label>)}</div></div>
       <p className="muted" style={{ margin: 0 }}>Placing it first or last changes where {t.name} receives and hands over cards.</p>
       <div className="actions"><button type="button" className="btn" onClick={onClose}>Cancel</button><button className="btn primary" type="submit" disabled={pending}><Ic n="plus" s={14} />Add column</button></div>
-    </form>
-  </Modal>;
-}
-
-export type RenameTarget = { what: 'column' | 'team' | 'project'; id: string; name: string };
-const RENAME = {
-  column: { label: 'Column name', max: 40, lead: 'Cards and their history stay as they are.', save: renameColumn },
-  team: { label: 'Team name', max: 60, lead: 'Cards, columns and people stay as they are. The team is told about the new name.', save: renameTeam },
-  project: { label: 'Project name', max: 120, lead: 'Everyone on the project is told about the new name.', save: renameProject },
-};
-
-export function RenameDialog({ target, onClose }: { target: RenameTarget; onClose: () => void }) {
-  const { pending, submit } = useSubmit(onClose), r = RENAME[target.what];
-  return <Modal onClose={onClose}>
-    <div><h2>Rename {target.what}</h2><p className="lead">{r.lead}</p></div>
-    <form style={{ display: 'flex', flexDirection: 'column', gap: 14 }} onSubmit={e => { e.preventDefault(); const n = String(new FormData(e.currentTarget).get('name')); submit(() => r.save(target.id, n)); }}>
-      <div className="field"><label htmlFor="rName">{r.label}</label><input id="rName" name="name" required maxLength={r.max} defaultValue={target.name} autoFocus onFocus={e => e.currentTarget.select()} /></div>
-      <div className="actions"><button type="button" className="btn" onClick={onClose}>Cancel</button><button className="btn primary" type="submit" disabled={pending}>Save</button></div>
     </form>
   </Modal>;
 }

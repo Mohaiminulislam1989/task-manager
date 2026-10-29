@@ -136,7 +136,7 @@ export const taskEvents = pgTable('task_events', {
 export const notifications = pgTable('notifications', {
   id: id(),
   userId: uuid('user_id').notNull().references(() => users.id),
-  projectId: uuid('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
+  projectId: uuid('project_id').references(() => projects.id, { onDelete: 'cascade' }), // null for organisation-level changes such as roles
   taskId: uuid('task_id').references(() => tasks.id, { onDelete: 'cascade' }),
   byId: uuid('by_id').notNull().references(() => users.id),
   kind: noteKind('kind').notNull(),
