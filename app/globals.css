@@ -666,3 +666,4 @@ dialog::backdrop { background: rgba(10,14,20,.45) }
 a.plain { color: inherit; text-decoration: none } a.plain:hover { text-decoration: underline }
 a.btn, a.icon-btn { text-decoration: none } a.btn { color: var(--ink) }
 a.logo { color: inherit; text-decoration: none }
+h1 .col-title, h2 .col-title { display: inline; white-space: normal; overflow: visible; text-align: left; font-weight: inherit; letter-spacing: inherit; line-height: inherit }

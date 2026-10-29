@@ -304,6 +304,37 @@ export async function renameColumn(columnId: string, name: string): Promise<Resu
   });
 }
 
+export async function renameTeam(teamId: string, name: string): Promise<Result> {
+  return guard(async () => {
+    const [t] = await db.select().from(s.teams).where(eq(s.teams.id, teamId));
+    if (!t) return fail('That team no longer exists.');
+    const { v, board: b } = await ctx(t.projectId);
+    if (!b.canRenameTeam(t.id)) return fail('Only this team’s lead and the project manager can rename the team.');
+    const n = name.trim().slice(0, 60);
+    if (!n) return fail('Name the team.');
+    if (n === t.name) return { ok: true, msg: 'Saved' };
+    if (b.teams.some(x => x.id !== t.id && x.name.toLowerCase() === n.toLowerCase())) return fail(`This project already has a team called ${n}.`);
+    await db.update(s.teams).set({ name: n }).where(eq(s.teams.id, teamId));
+    await notify(b, v, { teams: [t.id], kind: 'update', text: `${v.name} renamed the team "${t.name}" to "${n}"`, taskId: null });
+    revalidatePath('/people');
+    return done(t.projectId, 'Team renamed');
+  });
+}
+
+export async function renameProject(projectId: string, name: string): Promise<Result> {
+  return guard(async () => {
+    const { v, board: b } = await ctx(projectId);
+    if (!b.canRenameProject()) return fail('Only the project manager and admins can rename the project.');
+    const n = name.trim().slice(0, 120);
+    if (!n) return fail('Name the project.');
+    if (n === b.p.name) return { ok: true, msg: 'Saved' };
+    await db.update(s.projects).set({ name: n }).where(eq(s.projects.id, projectId));
+    await notify(b, v, { teams: b.teams.map(t => t.id), kind: 'update', text: `${v.name} renamed the project "${b.p.name}" to "${n}"`, taskId: null });
+    revalidatePath('/', 'layout');
+    return done(projectId, 'Project renamed');
+  });
+}
+
 export async function removeColumn(columnId: string): Promise<Result> {
   return guard(async () => {
     const [c] = await db.select().from(s.columns).where(eq(s.columns.id, columnId));

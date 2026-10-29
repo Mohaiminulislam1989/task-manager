@@ -6,7 +6,7 @@ import { Board, DONE, TODO, fmtDate, left, roleIn, type AnyCol, type Column, typ
 import { moveTask } from '@/app/actions';
 import { Av, Avs, Ic, useNow, usePeople, useSearch, useToast } from './ui';
 import { Drawer } from './Drawer';
-import { AddColumnDialog, AddTaskDialog, MoveDialog, RemoveColumnDialog, RenameColumnDialog } from './Dialogs';
+import { AddColumnDialog, AddTaskDialog, MoveDialog, RemoveColumnDialog, RenameDialog, type RenameTarget } from './Dialogs';
 import type { MentionItem } from './MentionTextarea';
 
 export type BoardTask = Task & { commentCount: number; fileCount: number };
@@ -16,7 +16,7 @@ export type DialogState =
   | { kind: 'add'; col: string }
   | { kind: 'addcol'; team: string }
   | { kind: 'rmcol'; col: Column }
-  | { kind: 'renamecol'; col: Column }
+  | { kind: 'rename'; target: RenameTarget }
   | null;
 
 const lvWord: Record<string, string> = { ok: 'On track', warn: 'Running late', bad: 'Over time', done: 'Finished', todo: 'Not started' };
@@ -117,7 +117,7 @@ export function ProjectView({ snap, initialTask }: { snap: Snapshot; initialTask
   return <>
     <section className="page gutter">
       <div className="page-top">
-        <div><h1>{snap.project.name}</h1><p className="hint"><span className="role-chip"><Ic n="user" s={13} />{roleLabel}</span>{hint}</p></div>
+        <div><h1>{b.canRenameProject() ? <button className="col-title" onClick={() => setDialog({ kind: 'rename', target: { what: 'project', id: snap.project.id, name: snap.project.name } })} title="Rename project">{snap.project.name}</button> : snap.project.name}</h1><p className="hint"><span className="role-chip"><Ic n="user" s={13} />{roleLabel}</span>{hint}</p></div>
         <div className="tools">
           <div className="seg layout" role="group" aria-label="Layout">{(['board', 'list'] as const).map(l => <button key={l} className={layout === l ? 'on' : ''} onClick={() => setLayout(l)}>{l === 'board' ? 'Board' : 'List'}</button>)}</div>
           <div className="seg" role="group" aria-label="Filter cards"><button className={!mine ? 'on' : ''} onClick={() => setMine(false)}>All cards</button><button className={mine ? 'on' : ''} onClick={() => setMine(true)}>My cards</button></div>
@@ -139,7 +139,7 @@ export function ProjectView({ snap, initialTask }: { snap: Snapshot; initialTask
           <span className="name">{t.name}</span><span className="peek"><Ic n="eye" /></span></button>;
         return <section key={t.id} className="team" style={{ ['--tc' as string]: `var(${t.color})` }}>
           <div className="team-head">
-            <div className="team-id"><span className="team-swatch" /><div><h2>{t.name}</h2><div className="sub">Step {ti + 1} of {b.teams.length}{t.leadId ? ` · Lead ${people[t.leadId]?.name}` : ''}</div></div></div>
+            <div className="team-id"><span className="team-swatch" /><div><h2>{b.canRenameTeam(t.id) ? <button className="col-title" onClick={() => setDialog({ kind: 'rename', target: { what: 'team', id: t.id, name: t.name } })} title="Rename team">{t.name}</button> : t.name}</h2><div className="sub">Step {ti + 1} of {b.teams.length}{t.leadId ? ` · Lead ${people[t.leadId]?.name}` : ''}</div></div></div>
             <div className="team-right"><Avs ids={[t.leadId, ...t.memberIds].filter(Boolean) as string[]} />
               {mineTeam ? (!b.isPM && <span className="team-tag">Your team</span>) : <><span className="team-tag"><Ic n="lock" s={12} />View only</span><button className="ghost" onClick={() => setExpanded(x => ({ ...x, [t.id]: false }))}>Collapse</button></>}
               {b.canEditCols(t.id) && <button className="btn sm" onClick={() => setDialog({ kind: 'addcol', team: t.id })}><Ic n="plus" s={13} />Column</button>}
@@ -149,7 +149,7 @@ export function ProjectView({ snap, initialTask }: { snap: Snapshot; initialTask
             const cards = snap.tasks.filter(k => k.col === c.id), dp = dropProps(c.id);
             return <div key={c.id} {...dp} className={`col ${dp.className}`}>
               <div className="col-head"><div className="col-name">
-                {b.canEditCols(t.id) ? <h3><button className="col-title" onClick={() => setDialog({ kind: 'renamecol', col: c })} title="Rename column">{c.name}</button></h3> : <h3>{c.name}</h3>}
+                {b.canEditCols(t.id) ? <h3><button className="col-title" onClick={() => setDialog({ kind: 'rename', target: { what: 'column', id: c.id, name: c.name } })} title="Rename column">{c.name}</button></h3> : <h3>{c.name}</h3>}
                 <span className="n-badge">{cards.length}</span></div>
                 <span className="col-r"><span className="est"><Ic n="clock" s={12} />{c.estH} h</span>
                   {b.canEditCols(t.id) && cols.length > 1 && <button className={`col-x ${cards.length ? 'busy' : ''}`} aria-label={`Remove column ${c.name}`} title={cards.length ? 'Move its cards out first' : 'Remove empty column'}
@@ -170,7 +170,7 @@ export function ProjectView({ snap, initialTask }: { snap: Snapshot; initialTask
     {dialog?.kind === 'add' && <AddTaskDialog b={b} projectId={snap.project.id} col={dialog.col} mentionItems={mentionItems} onClose={() => setDialog(null)} />}
     {dialog?.kind === 'addcol' && <AddColumnDialog b={b} teamId={dialog.team} onClose={() => setDialog(null)} />}
     {dialog?.kind === 'rmcol' && <RemoveColumnDialog col={dialog.col} onClose={() => setDialog(null)} />}
-    {dialog?.kind === 'renamecol' && <RenameColumnDialog col={dialog.col} onClose={() => setDialog(null)} />}
+    {dialog?.kind === 'rename' && <RenameDialog target={dialog.target} onClose={() => setDialog(null)} />}
   </>;
 }
 
