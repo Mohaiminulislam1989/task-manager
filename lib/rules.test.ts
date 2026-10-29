@@ -80,6 +80,16 @@ test('task titles and column names: team lead or PM and above', () => {
   assert.equal(as('imran', 'head').canEditCols('acct'), true);
 });
 
+test('team names: own lead or PM and above; project name: PM and above', () => {
+  assert.equal(as('karim').canRenameTeam('cre'), true);
+  assert.equal(as('karim').canRenameTeam('acct'), false);
+  assert.equal(as('rafi').canRenameTeam('cre'), false);
+  assert.equal(as('mo').canRenameTeam('acct'), true);
+  assert.equal(as('mo').canRenameProject(), true);
+  assert.equal(as('imran', 'head').canRenameProject(), true);
+  assert.equal(as('karim').canRenameProject(), false);
+});
+
 test('durations never show 60 minutes', () => {
   assert.equal(fmtDur(3 * H + 59.7 * 60000), '4h 00m');
   assert.equal(fmtDur(-(2 * H + 30 * 60000)), '2h 30m');

@@ -62,6 +62,9 @@ export class Board {
   canBacklog() { return this.isPM || this.role?.kind === 'lead'; }
   canCreateIn(tid: string) { return this.isPM || (this.role?.kind === 'lead' && this.role.team === tid); }
   canEditCols(tid: string) { return this.canCreateIn(tid); }
+  // Names: the project name is PM and above; a team's name is its lead, or PM and above.
+  canRenameProject() { return this.isPM; }
+  canRenameTeam(tid: string) { return this.canCreateIn(tid); }
   // Renaming a task: the lead of the team it sits in, or PM and above. Backlog and Done tasks: any lead.
   canRenameTask(t: Task) { const tid = this.col(t.col)?.teamId ?? null; return this.isPM || (this.role?.kind === 'lead' && (tid == null || this.role.team === tid)); }
   cardTeam(t: Task) { const c = this.col(t.col); return (c && !('special' in c && c.special) ? (c as Column).teamId : null) ?? t.lastTeam; }
