@@ -2,14 +2,14 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { and, eq, inArray, isNull } from 'drizzle-orm';
+import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 import { randomBytes } from 'node:crypto';
 import { db, schema as s } from '@/db';
 import { currentUser, endSession, requireUser, startSession, type Viewer } from '@/lib/auth';
 import { boardFor, people, taskDetail, tasksFor } from '@/lib/data';
 import { storeFile } from '@/lib/files';
-import { WEEKDAYS, hhmm, validZone, type WorkHours } from '@/lib/hours';
+import { DEFAULT_HOURS, WEEKDAYS, hhmm, validZone, type WorkHours } from '@/lib/hours';
 import { SWATCHES, assignable, Board, isAdminRole, mentionsIn, type Column, type Mentionable, type Task } from '@/lib/rules';
 
 type Result = { ok: true; msg?: string } | { ok: false; error: string };
@@ -23,6 +23,25 @@ export async function login(_: unknown, form: FormData) {
   if (!u || !(await bcrypt.compare(password, u.passwordHash))) return { error: 'Email or password is wrong.' };
   await startSession(u.id);
   redirect(u.mustChangePassword ? '/account?first=1' : '/');
+}
+
+// First run only: creates the organisation and its Super admin when the database has no users yet.
+export async function setupOrganization(_: unknown, form: FormData) {
+  const org = String(form.get('org') ?? '').trim(), name = String(form.get('name') ?? '').trim();
+  const email = String(form.get('email') ?? '').trim().toLowerCase(), password = String(form.get('password') ?? '');
+  const tz = String(form.get('tz') ?? '');
+  if (!org || !name || !/^\S+@\S+\.\S+$/.test(email)) return { error: 'Fill in every field.' };
+  if (password.length < 8) return { error: 'Use at least 8 characters for the password.' };
+  const id = await db.transaction(async tx => {
+    await tx.execute(sql`LOCK TABLE users IN EXCLUSIVE MODE`);
+    if ((await tx.select({ id: s.users.id }).from(s.users).limit(1)).length) return null;
+    const [o] = await tx.insert(s.organizations).values({ name: org, workHours: { ...DEFAULT_HOURS, tz: validZone(tz) ? tz : DEFAULT_HOURS.tz } }).returning();
+    const [u] = await tx.insert(s.users).values({ organizationId: o.id, name, email, orgRole: 'super', passwordHash: await bcrypt.hash(password, 10), mustChangePassword: false }).returning();
+    return u.id;
+  });
+  if (!id) return { error: 'This Line Board is already set up. Sign in instead.' };
+  await startSession(id);
+  redirect('/hours');
 }
 
 export async function logout() { await endSession(); redirect('/login'); }
