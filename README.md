@@ -60,8 +60,8 @@ It prints a temporary password. Sign in, choose your own password, set your time
 1. Import this repository in Vercel.
 2. Add a Postgres database (for example Neon from the Vercel Marketplace) and a Blob store. Both set their environment variables on the project.
 3. Add `AUTH_SECRET`.
-4. Run the migrations against the production database once: `DATABASE_URL=... npm run db:migrate`.
-5. Run `npm run create-admin` against the same database to create the first Super admin.
+4. Deploy. The `vercel-build` script applies database migrations before every build.
+5. Open the site. On an empty database it shows a one-time **Set up Line Board** page where you create the agency and your Super admin login (`npm run create-admin` does the same from a terminal).
 
 ## Scripts
 
