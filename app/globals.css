@@ -684,3 +684,12 @@ fieldset.field legend { font-size: 12.5px; font-weight: 600; color: var(--ink-2)
 .hol-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 8px }
 .hol-list li { display: flex; justify-content: space-between; align-items: center; padding: 6px 6px 6px 12px; font-size: 13px }
 .hol-list li + li { border-top: 1px solid var(--line) }
+
+/* Editing a task after creation: subtasks, deadline, assignees */
+.sub-add { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap }
+.sub-add input { flex: 1 1 160px; min-width: 0; border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; background: var(--surface); font: inherit; font-size: 13px }
+.sub-add input[type=datetime-local] { flex: 0 1 190px }
+.inline-edit { display: flex; flex-direction: column; gap: 8px; margin-top: 6px }
+.inline-edit > input { border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; background: var(--surface); font: inherit; font-size: 13px }
+.inline-edit .bar-r { display: flex; gap: 6px; justify-content: flex-end }
+.subs li > span:last-child { display: inline-flex; align-items: center; gap: 6px }

@@ -1,0 +1,1 @@
+ALTER TABLE "projects" ADD COLUMN "changed_at" timestamp with time zone DEFAULT now() NOT NULL;
