@@ -8,6 +8,7 @@ import { Av, Ic, toLocalInput, usePeople, useToast } from './ui';
 import { AttachButton, MAX_MB, PendChips, usePending } from './files';
 import { MentionTextarea, type MentionHandle, type MentionItem } from './MentionTextarea';
 import type { BoardTask } from './ProjectView';
+import { addFiles } from '@/lib/upload';
 
 type Res = { ok: true; msg?: string } | { ok: false; error: string };
 
@@ -20,7 +21,7 @@ export function Modal({ onClose, children, wide }: { onClose: () => void; childr
 function useSubmit(onClose: () => void) {
   const toast = useToast(), router = useRouter();
   const [pending, start] = useTransition();
-  return { pending, submit: (fn: () => Promise<Res>) => start(async () => { const r = await fn(); if (r.ok) { toast(r.msg ?? 'Saved'); onClose(); router.refresh(); } else toast(r.error); }) };
+  return { pending, submit: (fn: () => Promise<Res>) => start(async () => { const r = await fn().catch((e: unknown): Res => ({ ok: false, error: e instanceof Error ? e.message : 'Something went wrong.' })); if (r.ok) { toast(r.msg ?? 'Saved'); onClose(); router.refresh(); } else { toast(r.error); router.refresh(); } }) };
 }
 
 const in3days = () => { const d = new Date(Date.now() + 3 * 864e5); d.setHours(17, 0, 0, 0); return toLocalInput(d.getTime()); };
@@ -35,14 +36,14 @@ export function MoveDialog({ b, task, to, mentionItems, onClose }: { b: Board; t
     : rule.kind === 'back' ? [`Send back to ${b.team(col.teamId)?.name}?`, `"${task.title}" returns to ${col.name} and its column clock restarts. Tell them what needs another look.`, 'Client wants the price removed from frame 3', 'danger', 'Send back', 'left']
     : [rule.kind === 'reopen' ? 'Set a deadline to reopen' : 'Set a deadline to start', `"${task.title}" moves into ${col.name} and its clocks start now. Tasks on the line need a deadline.`, '', 'primary', rule.kind === 'reopen' ? 'Reopen task' : 'Start task', 'right'];
   const go = () => {
-    const fd = new FormData(); fd.set('taskId', task.id); fd.set('to', to);
+    const fd = new FormData(); fd.set('taskId', task.id); fd.set('from', task.col); fd.set('to', to);
     if (rule.needsComment) {
       const text = note.current!.value().trim();
       if (!text) { toast(rule.kind === 'back' ? 'Add a reason so the other team knows what to fix' : 'Add a note to explain this move'); return note.current!.focus(); }
-      fd.set('note', text); pend.files.forEach(f => fd.append('files', f));
+      fd.set('note', text);
     }
     if (rule.needsDeadline) fd.set('deadline', new Date(deadline).toISOString());
-    submit(() => moveTask(fd));
+    submit(async () => { if (rule.needsComment) await addFiles(fd, 'files', pend.files); return moveTask(fd); });
   };
   return <Modal onClose={onClose}>
     <div><h2>{T[0]}</h2><p className="lead">{T[1]}</p></div>
@@ -69,8 +70,7 @@ export function AddTaskDialog({ b, projectId, col, mentionItems, onClose }: { b:
       const fd = new FormData(e.currentTarget); fd.set('projectId', projectId); fd.set('desc', desc.current!.value());
       if (backlog) fd.set('col', 'todo');
       const dl = String(fd.get('deadline') ?? ''); if (dl) fd.set('deadline', new Date(dl).toISOString());
-      pend.files.forEach(f => fd.append('files', f));
-      submit(() => createTask(fd));
+      submit(async () => { await addFiles(fd, 'files', pend.files); return createTask(fd); });
     }}>
       <div className="field"><label htmlFor="nTitle">Title</label><input id="nTitle" name="title" required maxLength={200} placeholder={backlog ? 'Eid gift guide carousel' : 'YouTube pre-roll, 6 s'} autoFocus /></div>
       <div className="field"><label htmlFor="nDesc">Description</label><MentionTextarea ref={desc} id="nDesc" items={mentionItems} placeholder="Format, sizes, key message. Type @ to mention someone." /></div>

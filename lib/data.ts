@@ -1,5 +1,5 @@
 import 'server-only';
-import { and, asc, desc, eq, inArray, isNull } from 'drizzle-orm';
+import { and, asc, count, desc, eq, inArray, isNull } from 'drizzle-orm';
 import { db, schema as s } from '@/db';
 import { Board, roleIn, type Column, type Person, type ProjectShape, type Task, type OrgRole } from './rules';
 import type { Viewer } from './auth';
@@ -85,4 +85,9 @@ export async function notificationsFor(userId: string, projectId?: string) {
     .orderBy(desc(s.notifications.createdAt)).limit(50);
 }
 export const unreadFilter = isNull(s.notifications.readAt);
+// The bell lists the latest 50, but the badge counts every unread one.
+export async function unreadCount(userId: string) {
+  const [r] = await db.select({ n: count() }).from(s.notifications).where(and(eq(s.notifications.userId, userId), isNull(s.notifications.readAt)));
+  return r?.n ?? 0;
+}
 export type { OrgRole };

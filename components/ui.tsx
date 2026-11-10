@@ -75,3 +75,24 @@ export function relTime(ms: number, now: number) {
   return new Date(ms).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 }
 export const toLocalInput = (ms: number) => { const d = new Date(ms), p = (n: number) => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`; };
+
+// Keeps the page in step with other people's changes: polls a small stamp every few seconds
+// while the tab is visible (and at once when it regains focus) and refreshes when it changes.
+export function useLiveRefresh(projectId: string | null, refresh: () => void, every = 8000) {
+  useEffect(() => {
+    let last: string | null = null, busy = false, stop = false;
+    const tick = async () => {
+      if (busy || stop || document.visibilityState !== 'visible') return;
+      busy = true;
+      try {
+        const r = await fetch(`/api/pulse${projectId ? `?p=${projectId}` : ''}`, { cache: 'no-store' });
+        if (r.ok) { const { s } = await r.json() as { s: string }; if (last !== null && s !== last) refresh(); last = s; }
+      } catch { /* offline: try again next tick */ } finally { busy = false; }
+    };
+    tick();
+    const t = setInterval(tick, every);
+    const onVis = () => { if (document.visibilityState === 'visible') tick(); };
+    document.addEventListener('visibilitychange', onVis); window.addEventListener('focus', onVis);
+    return () => { stop = true; clearInterval(t); document.removeEventListener('visibilitychange', onVis); window.removeEventListener('focus', onVis); };
+  }, [projectId, refresh, every]);
+}

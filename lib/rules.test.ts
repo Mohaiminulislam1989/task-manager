@@ -130,3 +130,15 @@ test('working hours drive the dot, the deadline colour and day lengths', () => {
   assert.equal(b.fmt(13 * H), '1d 4h');
   assert.equal(fmtDur(13 * H), '13h 00m');
 });
+
+test('assignees follow the column owners when a card moves', () => {
+  const q: ProjectShape = { ...p, columns: p.columns.map(c => c.id === 'design' ? { ...c, ownerIds: ['rafi'] } : c) };
+  const b = new Board(q, roleIn(q, 'karim', null));
+  assert.deepEqual(b.assigneesAfterMove(task('copy', { assignees: ['karim'] }), 'design'), ['rafi']);
+  // same team, column without owners: keep
+  assert.deepEqual(b.assigneesAfterMove(task('brief', { assignees: ['tanvir'] }), 'plan'), ['tanvir']);
+  // handover into a team without owners: drop people from the old team
+  assert.deepEqual(b.assigneesAfterMove(task('plan', { assignees: ['tanvir'] }), 'copy'), []);
+  // Done and To do keep whoever had it
+  assert.deepEqual(b.assigneesAfterMove(task('design', { assignees: ['rafi'] }), 'done'), ['rafi']);
+});
