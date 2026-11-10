@@ -112,6 +112,19 @@ export class Board {
     return { ok: false, why: 'Cards move one team at a time.' };
   }
 
+  // Who works a card after it moves: the destination column's responsible people, if it has any.
+  // Crossing into another team without them keeps only assignees who belong to that team.
+  // To do and Done keep the assignees as they are.
+  assigneesAfterMove(tk: Task, toId: string): string[] {
+    const to = this.col(toId);
+    if (!to || ('special' in to && to.special)) return tk.assignees;
+    if (to.ownerIds.length) return [...to.ownerIds];
+    const fromTeam = this.col(tk.col)?.teamId ?? tk.lastTeam;
+    if (to.teamId === fromTeam) return tk.assignees;
+    const t = this.team(to.teamId), crew = t ? [t.leadId, ...t.memberIds] : [];
+    return tk.assignees.filter(a => crew.includes(a));
+  }
+
   // Working time between two instants, and durations written in working days ("1d" is one working day).
   work(a: number, b: number) { return workMs(this.p.hours, a, b); }
   get dayH() { return dayHours(this.p.hours); }

@@ -7,11 +7,12 @@
   --t1: #2a74ec; --t2: #8d4fd8; --t3: #0b9a8f; --t4: #d93f7a; --t5: #e2700f; --t6: #66768a;
   --ok: #1f9e4a; --warn: #e8a200; --bad: #e0332b;
   /* glass: wallpaper shows through translucent, blurred layers */
-  --glass: rgba(255,255,255,.52); --glass-2: rgba(255,255,255,.70); --glass-3: rgba(250,251,253,.84); --card: rgba(255,255,255,.80);
+  --glass: rgba(255,255,255,.30); --glass-2: rgba(255,255,255,.42); --glass-3: rgba(250,251,253,.64); --card: rgba(255,255,255,.46);
+  --sheen: linear-gradient(160deg, rgba(255,255,255,.55), rgba(255,255,255,.10) 38%, rgba(255,255,255,0) 60%);
   --edge: rgba(255,255,255,.75); --edge-soft: rgba(255,255,255,.5); --glass-line: rgba(30,42,64,.10); --ring: rgba(255,255,255,.95);
-  --blur: saturate(180%) blur(22px); --blur-lg: saturate(190%) blur(40px);
-  --wall: radial-gradient(1100px 760px at -5% -10%, rgba(110,160,255,.55), transparent 62%), radial-gradient(900px 680px at 105% 0%, rgba(196,140,255,.42), transparent 60%),
-    radial-gradient(1000px 760px at 70% 110%, rgba(90,220,200,.36), transparent 62%), radial-gradient(760px 600px at 0% 105%, rgba(255,160,196,.32), transparent 60%), #eef1f7;
+  --blur: saturate(190%) blur(26px); --blur-lg: saturate(200%) blur(48px); --blur-card: saturate(180%) blur(18px);
+  --wall: radial-gradient(1100px 760px at -5% -10%, rgba(80,140,255,.80), transparent 62%), radial-gradient(900px 680px at 105% 0%, rgba(186,120,255,.70), transparent 60%),
+    radial-gradient(700px 520px at 45% 55%, rgba(255,190,120,.40), transparent 65%), radial-gradient(1000px 760px at 75% 110%, rgba(40,210,190,.62), transparent 62%), radial-gradient(760px 600px at 0% 105%, rgba(255,120,175,.58), transparent 60%), #e9eef8;
   --shadow-1: 0 1px 2px rgba(20,30,55,.06), 0 2px 6px rgba(20,30,55,.05);
   --shadow-2: 0 8px 24px rgba(20,30,55,.10), 0 1px 3px rgba(20,30,55,.06);
   --shadow-3: 0 30px 70px rgba(20,30,55,.22), 0 4px 14px rgba(20,30,55,.08);
@@ -22,20 +23,22 @@
   --bg: #07090e; --surface: #1b1f28; --raised: rgba(255,255,255,.07); --ink: #eef2f7; --ink-2: #c8d0da; --muted: #95a0ad; --line: rgba(255,255,255,.12); --line-2: rgba(255,255,255,.07);
   --accent: #3b8bff; --accent-ink: #ffffff; --t1: #5b9dff; --t2: #b789f2; --t3: #3fd0c0; --t4: #f57aa8; --t5: #ffa056; --t6: #9babbd;
   --ok: #34d063; --warn: #ffd23f; --bad: #ff5a4f;
-  --glass: rgba(26,30,40,.50); --glass-2: rgba(38,43,56,.58); --glass-3: rgba(24,28,37,.86); --card: rgba(44,49,63,.72);
+  --glass: rgba(22,26,36,.34); --glass-2: rgba(36,41,54,.42); --glass-3: rgba(22,26,35,.72); --card: rgba(46,52,68,.42);
+  --sheen: linear-gradient(160deg, rgba(255,255,255,.14), rgba(255,255,255,.03) 38%, rgba(255,255,255,0) 60%);
   --edge: rgba(255,255,255,.14); --edge-soft: rgba(255,255,255,.08); --glass-line: rgba(255,255,255,.08); --ring: rgba(20,23,31,.95);
-  --wall: radial-gradient(1100px 760px at -5% -10%, rgba(40,90,220,.42), transparent 62%), radial-gradient(900px 680px at 105% 0%, rgba(130,60,210,.34), transparent 60%),
-    radial-gradient(1000px 760px at 70% 110%, rgba(0,150,140,.28), transparent 62%), radial-gradient(760px 600px at 0% 105%, rgba(200,50,110,.22), transparent 60%), #07090e;
+  --wall: radial-gradient(1100px 760px at -5% -10%, rgba(40,100,255,.62), transparent 62%), radial-gradient(900px 680px at 105% 0%, rgba(140,60,230,.55), transparent 60%),
+    radial-gradient(700px 520px at 45% 55%, rgba(230,120,40,.18), transparent 65%), radial-gradient(1000px 760px at 75% 110%, rgba(0,170,155,.45), transparent 62%), radial-gradient(760px 600px at 0% 105%, rgba(220,40,120,.40), transparent 60%), #06080d;
   --shadow-1: 0 1px 2px rgba(0,0,0,.35), 0 2px 6px rgba(0,0,0,.25); --shadow-2: 0 8px 24px rgba(0,0,0,.45); --shadow-3: 0 30px 70px rgba(0,0,0,.65); color-scheme: dark
 } }
 :root[data-theme="dark"] {
   --bg: #07090e; --surface: #1b1f28; --raised: rgba(255,255,255,.07); --ink: #eef2f7; --ink-2: #c8d0da; --muted: #95a0ad; --line: rgba(255,255,255,.12); --line-2: rgba(255,255,255,.07);
   --accent: #3b8bff; --accent-ink: #ffffff; --t1: #5b9dff; --t2: #b789f2; --t3: #3fd0c0; --t4: #f57aa8; --t5: #ffa056; --t6: #9babbd;
   --ok: #34d063; --warn: #ffd23f; --bad: #ff5a4f;
-  --glass: rgba(26,30,40,.50); --glass-2: rgba(38,43,56,.58); --glass-3: rgba(24,28,37,.86); --card: rgba(44,49,63,.72);
+  --glass: rgba(22,26,36,.34); --glass-2: rgba(36,41,54,.42); --glass-3: rgba(22,26,35,.72); --card: rgba(46,52,68,.42);
+  --sheen: linear-gradient(160deg, rgba(255,255,255,.14), rgba(255,255,255,.03) 38%, rgba(255,255,255,0) 60%);
   --edge: rgba(255,255,255,.14); --edge-soft: rgba(255,255,255,.08); --glass-line: rgba(255,255,255,.08); --ring: rgba(20,23,31,.95);
-  --wall: radial-gradient(1100px 760px at -5% -10%, rgba(40,90,220,.42), transparent 62%), radial-gradient(900px 680px at 105% 0%, rgba(130,60,210,.34), transparent 60%),
-    radial-gradient(1000px 760px at 70% 110%, rgba(0,150,140,.28), transparent 62%), radial-gradient(760px 600px at 0% 105%, rgba(200,50,110,.22), transparent 60%), #07090e;
+  --wall: radial-gradient(1100px 760px at -5% -10%, rgba(40,100,255,.62), transparent 62%), radial-gradient(900px 680px at 105% 0%, rgba(140,60,230,.55), transparent 60%),
+    radial-gradient(700px 520px at 45% 55%, rgba(230,120,40,.18), transparent 65%), radial-gradient(1000px 760px at 75% 110%, rgba(0,170,155,.45), transparent 62%), radial-gradient(760px 600px at 0% 105%, rgba(220,40,120,.40), transparent 60%), #06080d;
   --shadow-1: 0 1px 2px rgba(0,0,0,.35), 0 2px 6px rgba(0,0,0,.25); --shadow-2: 0 8px 24px rgba(0,0,0,.45); --shadow-3: 0 30px 70px rgba(0,0,0,.65); color-scheme: dark
 }
 
@@ -702,6 +705,14 @@ fieldset.field legend { font-size: 12.5px; font-weight: 600; color: var(--ink-2)
 .hol-list li { display: flex; justify-content: space-between; align-items: center; padding: 6px 6px 6px 12px; font-size: 13px }
 .hol-list li + li { border-top: 1px solid var(--line) }
 
+/* Editing a task after creation: subtasks, deadline, assignees */
+.sub-add { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap }
+.sub-add input { flex: 1 1 160px; min-width: 0; border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; background: var(--surface); font: inherit; font-size: 13px }
+.sub-add input[type=datetime-local] { flex: 0 1 190px }
+.inline-edit { display: flex; flex-direction: column; gap: 8px; margin-top: 6px }
+.inline-edit > input { border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; background: var(--surface); font: inherit; font-size: 13px }
+.inline-edit .bar-r { display: flex; gap: 6px; justify-content: flex-end }
+.subs li > span:last-child { display: inline-flex; align-items: center; gap: 6px }
 /* ==== Glass layer ====
    Apple-style translucent surfaces over the wallpaper. Rules here override the flat styles above.
    Three thicknesses: --glass (bars, team sections), --glass-2 (panels, buttons), --glass-3 (drawer, dialogs, menus: thickest so long text stays readable).
@@ -779,7 +790,7 @@ fieldset.field legend { font-size: 12.5px; font-weight: 600; color: var(--ink-2)
 .search:focus-within { background: var(--card); border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent) }
 .me { background: var(--glass-2); border-color: var(--edge-soft); box-shadow: inset 0 1px 0 var(--edge) }
 .proj select:hover { background: var(--raised); border-color: var(--glass-line) }
-.field input, .field textarea, .field select, .sel, .filters select, .tbl select, .bc > input, .est-in input, .b-final input[data-b], .lmove, .inline-name {
+.field input, .field textarea, .field select, .sel, .filters select, .tbl select, .bc > input, .est-in input, .b-final input[data-b], .lmove, .inline-name, .sub-add input, .inline-edit > input {
   background: var(--card); border-color: var(--glass-line); border-radius: 10px }
 .inline-name { border-color: var(--accent) }
 .pill, .ro, .kind, .due, .tabs .n, .ptabs button span, .fchip span, .upchip, .stint .tag, .st-done-t, .orgtag { background: var(--raised); border-color: var(--glass-line) }
@@ -814,3 +825,32 @@ fieldset.field legend { font-size: 12.5px; font-weight: 600; color: var(--ink-2)
   :root[data-theme="dark"] { --glass: #161a22; --glass-2: #1d222c; --glass-3: #1d222c; --card: #242a35; --wall: #07090e }
 }
 @media (prefers-reduced-transparency: reduce) and (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --glass: #161a22; --glass-2: #1d222c; --glass-3: #1d222c; --card: #242a35; --wall: #07090e } }
+
+/* ==== Glass, round 2: thinner glass, light sheen, floating cards ====
+   Deadline status moved from the card background to the card border (owner's call, 2026-11-10):
+   green, yellow at 80% of the deadline time, red when over. The card body is plain glass in every state. */
+.app, .panel, .tile, .filters, .plist, .ltable, .projcard, .rcard, .rk, .lp, .b-team, .b-final, .tpl, .auth-card, .box-card, .btn:not(.primary):not(.danger), .me, .pop, .mpop, dialog, .drawer, .b-head {
+  background-image: var(--sheen) }
+.team, .strip {
+  background: var(--sheen), linear-gradient(180deg, color-mix(in srgb, var(--tc) 26%, transparent), color-mix(in srgb, var(--tc) 9%, transparent) 160px), var(--glass);
+  -webkit-backdrop-filter: var(--blur-lg); backdrop-filter: var(--blur-lg) }
+.lane, .lane-strip { background: var(--sheen), var(--glass) }
+.col-body { gap: 12px; padding: 4px 6px 14px; overflow-x: visible }
+
+.card {
+  background: var(--sheen), var(--card); -webkit-backdrop-filter: var(--blur-card); backdrop-filter: var(--blur-card);
+  border: 1.5px solid var(--edge); border-radius: 16px; padding: 12px 14px;
+  box-shadow: inset 0 1px 0 var(--edge), 0 12px 28px -10px rgba(20,30,60,.30), 0 3px 8px -2px rgba(20,30,60,.10);
+  transition: transform .18s cubic-bezier(.2,.8,.2,1), box-shadow .18s, border-color .18s }
+.card:hover { transform: translateY(-3px) scale(1.01); box-shadow: inset 0 1px 0 var(--edge), 0 22px 40px -12px rgba(20,30,60,.38), 0 4px 10px -2px rgba(20,30,60,.12) }
+.card.dragging { transform: rotate(-1.5deg) scale(1.03) }
+.card.bg-ok, .card.bg-warn, .card.bg-bad { background: var(--sheen), var(--card) }
+.card.bg-ok { border: 2px solid var(--ok); box-shadow: inset 0 1px 0 var(--edge), 0 12px 28px -10px color-mix(in srgb, var(--ok) 55%, transparent), 0 3px 8px -2px rgba(20,30,60,.10) }
+.card.bg-warn { border: 2px solid var(--warn); box-shadow: inset 0 1px 0 var(--edge), 0 12px 28px -10px color-mix(in srgb, var(--warn) 65%, transparent), 0 3px 8px -2px rgba(20,30,60,.10) }
+.card.bg-bad { border: 2px solid var(--bad); box-shadow: inset 0 1px 0 var(--edge), 0 12px 28px -10px color-mix(in srgb, var(--bad) 60%, transparent), 0 3px 8px -2px rgba(20,30,60,.10) }
+.card.todo { border: 1.5px dashed color-mix(in srgb, var(--muted) 60%, transparent) }
+.card.todo.bg-ok, .card.todo.bg-warn, .card.todo.bg-bad { border-style: dashed }
+.legend b { width: 16px; height: 11px; border-radius: 4px; background: var(--card) }
+.legend b.bg-ok, .legend b.bg-warn, .legend b.bg-bad { background: var(--card); border-width: 2px; border-style: solid }
+.legend b.bg-ok { border-color: var(--ok) } .legend b.bg-warn { border-color: var(--warn) } .legend b.bg-bad { border-color: var(--bad) }
+@media (prefers-reduced-motion: reduce) { .card:hover, .card.dragging { transform: none } }

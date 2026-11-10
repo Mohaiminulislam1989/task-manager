@@ -3,11 +3,13 @@
 A production-line Kanban for agency work. Each project is a line of teams, each team owns its columns, and every column has a time estimate. Cards move left to right, team by team, from a shared **To do** backlog to **Done**.
 
 - **Card dot** (top right): time in the current column. Green, yellow at 80% of the column's estimate, red when over.
-- **Card colour**: the same rule against the task's overall deadline.
+- **Card border**: the same rule against the task's overall deadline.
 - **Roles**: Super admin, Head of projects, Project manager, Team lead, Team member. See *People & roles → What each role can do* in the app.
 - **Moves**: members move cards inside their own team. Leads hand over to the next team, send back with a reason, start backlog tasks, and mark tasks done. Moving a task into To do or Done always needs a note. Only the project manager and admins reopen finished tasks.
 - **Working hours**: every clock counts working time only, in the organisation's time zone, skipping days off and holidays. On the board, one day means one working day. The Super admin sets this on **Working hours** (account menu); everyone else can see it.
-- **Editing**: team leads rename their team's columns and tasks. Project managers and admins rename anything.
+- **Editing**: team leads rename their team's columns and tasks, change a column's hours, and change a task's assignees and deadline. Anyone on the team adds subtasks. Project managers and admins can do all of it anywhere.
+- **Assignees follow the line**: when a card enters a column with responsible people, they become its assignees.
+- **Live board**: open pages check for changes every 8 seconds (and when the tab regains focus) and refresh themselves. If two people move the same card at once, the second move is refused and their board refreshes.
 - Comments, image and video attachments, @mentions of people or teams, in-app notifications, list view, PM dashboard, project builder.
 
 ## Stack
@@ -52,7 +54,7 @@ It prints a temporary password. Sign in, choose your own password, set your time
 | --- | --- | --- |
 | `DATABASE_URL` | Yes | Postgres connection string (Neon, Vercel Postgres, Supabase or local). |
 | `AUTH_SECRET` | Yes | Random string of 32+ characters for signing session cookies. Generate one with `openssl rand -base64 32`. |
-| `BLOB_READ_WRITE_TOKEN` | On Vercel | Vercel Blob token for attachments. Without it, files are saved to `./uploads` on the server's disk, which only suits local use. |
+| `BLOB_READ_WRITE_TOKEN` | On Vercel | Vercel Blob token for attachments. With it, browsers upload files straight to Blob (up to 200 MB, past Vercel's 4.5 MB request limit). Without it, files go through the server to `./uploads`, which only suits local use. |
 | `DEMO_PASSWORD` | No | Password for the seeded demo accounts. Defaults to `demo1234`. |
 
 ## Deploy to Vercel

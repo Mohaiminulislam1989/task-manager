@@ -37,6 +37,8 @@ export const projects = pgTable('projects', {
   name: text('name').notNull(),
   managerId: uuid('manager_id').notNull().references(() => users.id),
   createdAt: at('created_at').notNull().defaultNow(),
+  // Bumped on every change to the project's board, so open boards know to refresh.
+  changedAt: at('changed_at').notNull().defaultNow(),
 });
 
 export const teams = pgTable('teams', {

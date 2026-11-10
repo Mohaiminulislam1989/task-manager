@@ -22,3 +22,14 @@ export async function storeFile(file: File): Promise<{ url: string; name: string
   await writeFile(path.join(UPLOAD_DIR, key), Buffer.from(await file.arrayBuffer()));
   return { url: `/api/files/${encodeURIComponent(key)}`, name: file.name, mime: file.type, size: file.size };
 }
+
+// A file the browser already uploaded to Vercel Blob. Checked against the store so only
+// our own blobs, with an image or video type, can be attached.
+export async function blobRef(raw: string): Promise<{ url: string; name: string; mime: string; size: number }> {
+  const { url, name } = JSON.parse(raw) as { url: string; name: string };
+  if (!process.env.BLOB_READ_WRITE_TOKEN || typeof url !== 'string' || !/^https:\/\/[a-z0-9.-]+\.blob\.vercel-storage\.com\/attachments\//i.test(url)) throw new Error('That upload could not be found.');
+  const { head } = await import('@vercel/blob');
+  const h = await head(url);
+  if (!/^(image|video)\//.test(h.contentType)) throw new Error(`${name} is not an image or video`);
+  return { url: h.url, name: String(name || h.pathname.split('/').pop()).slice(0, 200), mime: h.contentType, size: h.size };
+}

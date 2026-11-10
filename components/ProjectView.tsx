@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Board, DONE, TODO, fmtDate, roleIn, type AnyCol, type Column, type OrgRole, type ProjectShape, type Task } from '@/lib/rules';
-import { moveTask, renameColumn, renameProject, renameTeam } from '@/app/actions';
+import { moveTask, renameColumn, renameProject, renameTeam, setColumnEstimate } from '@/app/actions';
 import { Av, Avs, Ic, useNow, usePeople, useSearch, useToast } from './ui';
 import { Drawer } from './Drawer';
 import { AddColumnDialog, AddTaskDialog, MoveDialog, RemoveColumnDialog } from './Dialogs';
@@ -61,7 +61,7 @@ export function ProjectView({ snap, initialTask }: { snap: Snapshot; initialTask
     const rule = b.moveRule(tk, to);
     if (!rule.ok) { if (rule.why) toast(rule.why); return; }
     if (rule.needsComment || rule.needsDeadline) return setDialog({ kind: 'move', task: tk, to });
-    const fd = new FormData(); fd.set('taskId', tk.id); fd.set('to', to);
+    const fd = new FormData(); fd.set('taskId', tk.id); fd.set('from', tk.col); fd.set('to', to);
     start(async () => { const res = await moveTask(fd); toast(res.ok ? res.msg ?? 'Moved' : res.error); router.refresh(); });
   };
 
@@ -126,7 +126,7 @@ export function ProjectView({ snap, initialTask }: { snap: Snapshot; initialTask
       </div>
       <div className="legend">
         <span><i className="s-ok" /><i className="s-warn" /><i className="s-bad" /> Dot: time in the current column, yellow at 80%, red when over</span>
-        <span><b className="bg-ok" /><b className="bg-warn" /><b className="bg-bad" /> Card color: time to the overall deadline</span>
+        <span><b className="bg-ok" /><b className="bg-warn" /><b className="bg-bad" /> Card border: time to the overall deadline</span>
         <span className="muted">Counted in <Link href="/hours" className="link">working hours</Link></span>
       </div>
     </section>
@@ -153,7 +153,7 @@ export function ProjectView({ snap, initialTask }: { snap: Snapshot; initialTask
               <div className="col-head"><div className="col-name">
                 {b.canEditCols(t.id) ? <h3><InlineName value={c.name} label="column" maxLength={40} save={n => renameColumn(c.id, n)} /></h3> : <h3>{c.name}</h3>}
                 <span className="n-badge">{cards.length}</span></div>
-                <span className="col-r"><span className="est" title={`Estimate: ${c.estH} working hours`}><Ic n="clock" s={12} />{c.estH} h</span>
+                <span className="col-r"><span className="est" title={`Estimate: ${c.estH} working hours`}><Ic n="clock" s={12} />{b.canEditCols(t.id) ? <InlineName value={String(c.estH)} suffix=" h" kind="number" label="estimate (working hours)" maxLength={6} save={n => setColumnEstimate(c.id, Number(n))} /> : `${c.estH} h`}</span>
                   {b.canEditCols(t.id) && cols.length > 1 && <button className={`col-x ${cards.length ? 'busy' : ''}`} aria-label={`Remove column ${c.name}`} title={cards.length ? 'Move its cards out first' : 'Remove empty column'}
                     onClick={() => cards.length ? toast(`${c.name} still has ${cards.length} card${cards.length > 1 ? 's' : ''}. Move ${cards.length > 1 ? 'them' : 'it'} out first.`) : setDialog({ kind: 'rmcol', col: c })}><Ic n="trash" s={14} /></button>}</span></div>
               {c.ownerIds.length > 0 && <div className="owners"><Avs ids={c.ownerIds} />{c.ownerIds.map(o => people[o]?.name).join(', ')}</div>}
