@@ -827,7 +827,7 @@ fieldset.field legend { font-size: 12.5px; font-weight: 600; color: var(--ink-2)
 @media (prefers-reduced-transparency: reduce) and (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --glass: #161a22; --glass-2: #1d222c; --glass-3: #1d222c; --card: #242a35; --wall: #07090e } }
 
 /* ==== Glass, round 2: thinner glass, light sheen, floating cards ====
-   Deadline status moved from the card background to the card border (owner's call, 2026-11-10):
+   Deadline status moved from the card background to a soft bottom edge (owner's call, 2026-11-10):
    green, yellow at 80% of the deadline time, red when over. The card body is plain glass in every state. */
 .app, .panel, .tile, .filters, .plist, .ltable, .projcard, .rcard, .rk, .lp, .b-team, .b-final, .tpl, .auth-card, .box-card, .btn:not(.primary):not(.danger), .me, .pop, .mpop, dialog, .drawer, .b-head {
   background-image: var(--sheen) }
@@ -845,12 +845,15 @@ fieldset.field legend { font-size: 12.5px; font-weight: 600; color: var(--ink-2)
 .card:hover { transform: translateY(-3px) scale(1.01); box-shadow: inset 0 1px 0 var(--edge), 0 22px 40px -12px rgba(20,30,60,.38), 0 4px 10px -2px rgba(20,30,60,.12) }
 .card.dragging { transform: rotate(-1.5deg) scale(1.03) }
 .card.bg-ok, .card.bg-warn, .card.bg-bad { background: var(--sheen), var(--card) }
-.card.bg-ok { border: 2px solid var(--ok); box-shadow: inset 0 1px 0 var(--edge), 0 12px 28px -10px color-mix(in srgb, var(--ok) 55%, transparent), 0 3px 8px -2px rgba(20,30,60,.10) }
-.card.bg-warn { border: 2px solid var(--warn); box-shadow: inset 0 1px 0 var(--edge), 0 12px 28px -10px color-mix(in srgb, var(--warn) 65%, transparent), 0 3px 8px -2px rgba(20,30,60,.10) }
-.card.bg-bad { border: 2px solid var(--bad); box-shadow: inset 0 1px 0 var(--edge), 0 12px 28px -10px color-mix(in srgb, var(--bad) 60%, transparent), 0 3px 8px -2px rgba(20,30,60,.10) }
-.card.todo { border: 1.5px dashed color-mix(in srgb, var(--muted) 60%, transparent) }
-.card.todo.bg-ok, .card.todo.bg-warn, .card.todo.bg-bad { border-style: dashed }
+/* deadline status: a soft, light-colored bottom edge only (owner's call, 2026-11-10); the other three sides stay plain glass */
+.card { --dl: transparent }
+.card::after { content: ""; position: absolute; left: 14px; right: 14px; bottom: -1px; height: 3px; border-radius: 3px 3px 0 0; background: var(--dl); pointer-events: none }
+.card.bg-ok { --dl: color-mix(in srgb, var(--ok) 45%, transparent) }
+.card.bg-warn { --dl: color-mix(in srgb, var(--warn) 55%, transparent) }
+.card.bg-bad { --dl: color-mix(in srgb, var(--bad) 45%, transparent) }
+.card.bg-ok, .card.bg-warn, .card.bg-bad { border: 1.5px solid var(--edge) }
+.card.todo, .card.todo.bg-ok, .card.todo.bg-warn, .card.todo.bg-bad { border: 1.5px dashed color-mix(in srgb, var(--muted) 60%, transparent) }
 .legend b { width: 16px; height: 11px; border-radius: 4px; background: var(--card) }
-.legend b.bg-ok, .legend b.bg-warn, .legend b.bg-bad { background: var(--card); border-width: 2px; border-style: solid }
-.legend b.bg-ok { border-color: var(--ok) } .legend b.bg-warn { border-color: var(--warn) } .legend b.bg-bad { border-color: var(--bad) }
+.legend b.bg-ok, .legend b.bg-warn, .legend b.bg-bad { background: var(--card); border-bottom-width: 3px; border-bottom-style: solid }
+.legend b.bg-ok { border-bottom-color: color-mix(in srgb, var(--ok) 45%, transparent) } .legend b.bg-warn { border-bottom-color: color-mix(in srgb, var(--warn) 55%, transparent) } .legend b.bg-bad { border-bottom-color: color-mix(in srgb, var(--bad) 45%, transparent) }
 @media (prefers-reduced-motion: reduce) { .card:hover, .card.dragging { transform: none } }
