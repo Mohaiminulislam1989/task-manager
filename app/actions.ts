@@ -9,7 +9,7 @@ import { db, schema as s } from '@/db';
 import { currentUser, endSession, requireUser, startSession, type Viewer } from '@/lib/auth';
 import { boardFor, people, taskDetail, tasksFor } from '@/lib/data';
 import { blobRef, storeFile } from '@/lib/files';
-import { DEFAULT_HOURS, WEEKDAYS, hhmm, validZone, type WorkHours } from '@/lib/hours';
+import { DEFAULT_HOURS, WEEKDAYS, addWork, hhmm, validZone, type WorkHours } from '@/lib/hours';
 import { SWATCHES, assignable, Board, isAdminRole, mentionsIn, type Column, type Mentionable, type Task } from '@/lib/rules';
 
 type Result = { ok: true; msg?: string } | { ok: false; error: string };
@@ -156,17 +156,21 @@ export async function moveTask(form: FormData): Promise<Result> {
     const fromTeam = from.teamId, toTeam = to.teamId;
     const spent = b.work(tk.entered, now.getTime());
     const nextAssignees = b.assigneesAfterMove(tk, toId);
+    // Moving a card that is on hold resumes it first: the hold's working time pushes the deadline back.
+    const held = tk.hold ? b.work(tk.hold.since, now.getTime()) : 0;
+    if (held && deadline && !rule.needsDeadline) deadline = addWork(b.p.hours, deadline, held);
     const same = nextAssignees.length === tk.assignees.length && nextAssignees.every(a => tk.assignees.includes(a));
     // Lock the row and check nobody moved it since this person loaded the board.
     const moved = await db.transaction(async tx => {
       const [cur] = await tx.select({ stage: s.tasks.stage, columnId: s.tasks.columnId, entered: s.tasks.enteredColumnAt }).from(s.tasks).where(eq(s.tasks.id, tk.id)).for('update');
       if (!cur || (cur.stage === 'line' ? cur.columnId : cur.stage) !== tk.col || cur.entered.getTime() !== tk.entered) return false;
-      if (!('special' in from && from.special)) await tx.insert(s.stints).values({ taskId: tk.id, columnId: from.id, startedAt: new Date(tk.entered), endedAt: now });
+      if (!('special' in from && from.special)) await tx.insert(s.stints).values({ taskId: tk.id, columnId: from.id, startedAt: new Date(tk.entered), endedAt: now, pausedMs: (tk.paused ?? 0) + held });
       await tx.update(s.tasks).set({
         stage: toId === 'todo' ? 'todo' : toId === 'done' ? 'done' : 'line',
         columnId: toId === 'todo' || toId === 'done' ? null : toId,
         enteredColumnAt: now,
         deadlineAt: deadline ? new Date(deadline) : null,
+        holdSince: null, holdReason: null, pausedMs: 0,
         ...(fromTeam ? { lastTeamId: fromTeam } : {}),
         ...(tk.col === 'todo' ? { startedAt: now } : {}),
       }).where(eq(s.tasks.id, tk.id));
@@ -187,6 +191,7 @@ export async function moveTask(form: FormData): Promise<Result> {
     if (rule.kind === 'back') text = `Sent back to ${tName(toTeam)} (${to.name}) for review`;
     if (!('special' in from && from.special)) text += ` after ${b.fmt(spent)} in ${from.name}`;
     await log(tk.id, v.id, note ? `${text}. Reason: "${note}"` : text);
+    if (tk.hold) await log(tk.id, v.id, `Resumed from hold after ${b.fmt(held)}${held && tk.deadline && !rule.needsDeadline ? ', deadline pushed back by the same' : ''}`);
     if (rule.needsDeadline) await log(tk.id, v.id, `Set the deadline`);
     if (!same) await log(tk.id, v.id, nextAssignees.length ? `Assigned to ${await names(v.organizationId, nextAssignees)} for ${to.name}` : 'Unassigned: nobody on this team was working it');
     if (note) {
@@ -385,6 +390,42 @@ export async function removeSubtask(subId: string): Promise<Result> {
     await log(tk.id, v.id, `Removed subtask "${st.title}"`);
     await notify(b, v, { teams: [b.cardTeam(tk)], kind: 'update', text: `${v.name} removed the subtask "${st.title}" from "${tk.title}"`, taskId: tk.id });
     return done(b.p.id, 'Subtask removed');
+  });
+}
+
+// ---------- on hold ----------
+// A card waiting on something outside the team (client feedback, assets, a shoot date) is put on hold:
+// its column clock and deadline stop. Resuming adds the time on hold to the column's allowance and
+// pushes the deadline back by the same working time.
+export async function holdTask(taskId: string, reason: string): Promise<Result> {
+  return guard(async () => {
+    const { v, board: b, tk } = await loadTask(taskId);
+    if (!b.canHold(tk)) return fail('Only this team and the project manager can put this card on hold.');
+    if (tk.hold) return fail('This card is already on hold.');
+    const why = reason.trim().slice(0, 500);
+    if (!why) return fail('Say what the card is waiting for.');
+    const r = await db.update(s.tasks).set({ holdSince: new Date(), holdReason: why }).where(and(eq(s.tasks.id, tk.id), isNull(s.tasks.holdSince))).returning({ id: s.tasks.id });
+    if (!r.length) return fail('Someone else just put this card on hold.');
+    await log(tk.id, v.id, `Put on hold: "${why}"`);
+    await notify(b, v, { teams: [b.cardTeam(tk)], kind: 'update', text: `${v.name} put "${tk.title}" on hold: ${why}`, taskId: tk.id });
+    await notifyMentions(b, v, tk, why, 'a hold reason');
+    return done(b.p.id, 'On hold. Clocks stopped');
+  });
+}
+
+export async function resumeTask(taskId: string): Promise<Result> {
+  return guard(async () => {
+    const { v, board: b, tk } = await loadTask(taskId);
+    if (!b.canHold(tk)) return fail('Only this team and the project manager can resume this card.');
+    if (!tk.hold) return { ok: true, msg: 'Already running' };
+    const now = Date.now(), held = b.work(tk.hold.since, now);
+    const deadline = tk.deadline ? addWork(b.p.hours, tk.deadline, held) : null;
+    const r = await db.update(s.tasks).set({ holdSince: null, holdReason: null, pausedMs: (tk.paused ?? 0) + held, deadlineAt: deadline ? new Date(deadline) : null })
+      .where(and(eq(s.tasks.id, tk.id), eq(s.tasks.holdSince, new Date(tk.hold.since)))).returning({ id: s.tasks.id });
+    if (!r.length) return fail('Someone else just changed this card. The board has been refreshed.');
+    await log(tk.id, v.id, `Resumed after ${b.fmt(held)} on hold${held && deadline ? '; deadline pushed back by the same' : ''}`);
+    await notify(b, v, { teams: [b.cardTeam(tk)], kind: 'update', text: `${v.name} resumed "${tk.title}" after ${b.fmt(held)} on hold`, taskId: tk.id });
+    return done(b.p.id, held ? `Resumed. Deadline pushed back ${b.fmt(held)}` : 'Resumed');
   });
 }
 

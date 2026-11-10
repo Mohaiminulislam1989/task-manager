@@ -854,3 +854,14 @@ fieldset.field legend { font-size: 12.5px; font-weight: 600; color: var(--ink-2)
 .legend b.bg-ok, .legend b.bg-warn, .legend b.bg-bad { background: var(--card); border-width: 2px; border-style: solid }
 .legend b.bg-ok { border-color: var(--ok) } .legend b.bg-warn { border-color: var(--warn) } .legend b.bg-bad { border-color: var(--bad) }
 @media (prefers-reduced-motion: reduce) { .card:hover, .card.dragging { transform: none } }
+
+/* On hold: clocks stopped while a card waits on something outside the team */
+.held { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; color: var(--accent) }
+.timer .held { padding: 1px 7px; border-radius: 999px; background: color-mix(in srgb, var(--accent) 14%, transparent) }
+.card.on-hold { outline: 1.5px dashed color-mix(in srgb, var(--accent) 55%, transparent); outline-offset: 2px }
+.pill.p-hold { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); background: color-mix(in srgb, var(--accent) 12%, transparent) }
+.hold-box { display: flex; flex-direction: column; gap: 8px; border-color: color-mix(in srgb, var(--accent) 40%, var(--line)) }
+.hold-box h3 { display: flex; align-items: center; gap: 6px; color: var(--accent) }
+.hold-box p { margin: 0; font-size: 12.5px } .hold-why { font-size: 13.5px !important; font-weight: 500 }
+.hold-box textarea { border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; background: var(--surface); font: inherit; font-size: 13px; resize: vertical }
+.hold-box > .btn { align-self: flex-start } .hold-btn { width: 100% }

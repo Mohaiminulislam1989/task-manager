@@ -25,6 +25,7 @@ const I: Record<string, ReactNode> = {
   img: <><rect x="3.5" y="4.5" width="17" height="15" rx="2.5" /><circle cx="9" cy="10" r="1.8" /><path d="M20.5 16l-5-5-9 8.5" /></>,
   trash: <path d="M4.5 7h15M9.5 7V4.5h5V7M6.5 7l1 13h9l1-13M10 11v5.5M14 11v5.5" />,
   chev: <path d="M9 6l6 6-6 6" />,
+  pause: <><rect x="6.5" y="5" width="3.6" height="14" rx="1.2" /><rect x="13.9" y="5" width="3.6" height="14" rx="1.2" /></>,
   out: <path d="M15 4.5h3.5a1.5 1.5 0 0 1 1.5 1.5v12a1.5 1.5 0 0 1-1.5 1.5H15M10 16.5l4.5-4.5L10 7.5M14.5 12H4" />,
 };
 export function Ic({ n, s = 16 }: { n: keyof typeof I | string; s?: number }) {

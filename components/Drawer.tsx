@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { DONE, H, TODO, fmtDate, level, type AnyCol, type Board, type Level } from '@/lib/rules';
 import { InlineName } from './InlineName';
-import { addComment, addSubtask, addTaskFiles, renameTask, getTaskDetail, removeFile, removeSubtask, setAssignees, setDeadline, toggleSubtask, updateDetails } from '@/app/actions';
+import { addComment, addSubtask, holdTask, resumeTask, addTaskFiles, renameTask, getTaskDetail, removeFile, removeSubtask, setAssignees, setDeadline, toggleSubtask, updateDetails } from '@/app/actions';
 import type { TaskDetail } from '@/lib/data';
 import { Av, Ic, relTime, toLocalInput, usePeople, useToast } from './ui';
 import { AttachButton, Lightbox, PendChips, Thumb, usePending, type FileInfo } from './files';
@@ -33,6 +33,7 @@ export function Drawer({ task: k, b, me, now, mentionItems, onClose, onMove }: {
   const [whoEdit, setWhoEdit] = useState<string[] | null>(null);
   const [dlEdit, setDlEdit] = useState<string | null>(null);
   const [newSub, setNewSub] = useState({ title: '', due: '' });
+  const [holdWhy, setHoldWhy] = useState<string | null>(null);
 
   const load = useCallback(() => getTaskDetail(k.id).then(setDetail).catch(() => setDetail(null)), [k.id]);
   useEffect(() => { load(); }, [load, k.entered, k.commentCount, k.fileCount]);
@@ -73,7 +74,7 @@ export function Drawer({ task: k, b, me, now, mentionItems, onClose, onMove }: {
     if (ok.length) run(async () => { await addFiles(fd, 'files', ok); return addTaskFiles(fd); });
   };
 
-  const stintRows = detail ? [...detail.stints.map(st => ({ c: b.col(st.col), ms: b.work(st.start, st.end), live: false })), ...(!special ? [{ c, ms: b.work(k.entered, now), live: true }] : [])].filter(r => r.c) : [];
+  const stintRows = detail ? [...detail.stints.map(st => ({ c: b.col(st.col), ms: Math.max(0, b.work(st.start, st.end) - st.paused), live: false })), ...(!special ? [{ c, ms: Math.max(0, b.work(k.entered, k.hold ? Math.min(now, k.hold.since) : now) - (k.paused ?? 0)), live: true }] : [])].filter(r => r.c) : [];
 
   return <>
     <div className="scrim" onClick={onClose} />
@@ -88,6 +89,7 @@ export function Drawer({ task: k, b, me, now, mentionItems, onClose, onMove }: {
           <div className="pills">
             <span className={`pill p-${cs.lv}`}><i className={`s-${cs.lv}`} />{c.id === 'done' ? 'Finished' : c.id === 'todo' ? 'In the backlog' : `${c.name}: ${b.left(cs.left)}`}</span>
             {ds.lv !== 'done' && <span className={`pill p-${ds.lv}`}><Ic n="cal" s={13} />{ds.lv === 'none' ? 'No deadline yet' : 'Deadline: ' + b.left(ds.left)}</span>}
+            {k.hold && <span className="pill p-hold"><Ic n="pause" s={12} />On hold</span>}
             <span className="pill"><Ic n="check" s={13} />{done}/{k.subtasks.length} subtasks</span>
           </div>
         </div>
@@ -139,7 +141,7 @@ export function Drawer({ task: k, b, me, now, mentionItems, onClose, onMove }: {
                   {stintRows.map((r, i) => {
                     const col = r.c!, est = col.estH * H, frac = r.ms / est, lv = r.live ? level(frac) : frac > 1 ? 'bad' : 'ok', diff = r.ms - est;
                     return <div key={i} className="stint" style={{ ['--tc' as string]: `var(${b.team(col.teamId)?.color ?? '--t6'})` }}><span className="sw" />
-                      <div className="nm"><b>{col.name}</b><small>{b.team(col.teamId)?.name}{r.live ? ' · in progress' : ''}</small></div>
+                      <div className="nm"><b>{col.name}</b><small>{b.team(col.teamId)?.name}{r.live ? (k.hold ? ' · on hold' : ' · in progress') : ''}</small></div>
                       <div className="bar"><span className={`s-${lv}`} style={{ width: `${Math.min(100, frac * 100)}%` }} /></div>
                       <div className="num"><b>{b.fmt(r.ms)}</b><small>of {col.estH} h</small></div>
                       <span className={`tag ${lv}`}>{r.live ? (diff > 0 ? b.fmt(diff) + ' over' : b.fmt(-diff) + ' left') : diff > 0 ? b.fmt(diff) + ' over' : 'On time'}</span></div>;
@@ -150,6 +152,15 @@ export function Drawer({ task: k, b, me, now, mentionItems, onClose, onMove }: {
             </section>
           </div>
           <aside className="d-side">
+            {k.hold ? <div className="box-card hold-box"><h3><Ic n="pause" s={12} /> On hold</h3>
+              <p className="hold-why">{k.hold.reason}</p>
+              <p className="muted">Since {fmtDate(k.hold.since)} · {b.fmt(b.work(k.hold.since, now))} so far. Both clocks are stopped; resuming pushes the deadline back by the same working time.</p>
+              {b.canHold(k) && <button className="btn primary sm" disabled={pending} onClick={() => run(() => resumeTask(k.id))}><Ic n="play" s={12} />Resume</button>}</div>
+              : b.canHold(k) && (holdWhy == null ? <button className="btn sm hold-btn" onClick={() => setHoldWhy('')}><Ic n="pause" s={13} />Put on hold</button>
+                : <div className="box-card hold-box"><h3>Put on hold</h3>
+                  <p className="muted">Stops both clocks while the card waits on something outside the team.</p>
+                  <div className="inline-edit"><textarea aria-label="What is it waiting for?" placeholder="Waiting for client feedback on the first cut" maxLength={500} rows={2} value={holdWhy} onChange={e => setHoldWhy(e.target.value)} autoFocus />
+                    <span className="bar-r"><button className="btn sm" onClick={() => setHoldWhy(null)}>Cancel</button><button className="btn primary sm" disabled={pending || !holdWhy.trim()} onClick={() => run(() => holdTask(k.id, holdWhy), () => setHoldWhy(null))}>Put on hold</button></span></div></div>)}
             {editable && targets.length > 0 && <div className="box-card"><h3>Move card</h3><div className="moves">
               {targets.filter(x => kindOf(x) === 'start' || kindOf(x) === 'reopen').map(x => <button key={x.id} className="mv handover" onClick={() => onMove(x.id)}><Ic n="right" s={15} />{kindOf(x) === 'start' ? 'Start in' : 'Reopen in'} {x.name}<span className="k">{b.team(x.teamId)?.name}</span></button>)}
               {targets.filter(x => kindOf(x) === 'handover').map(x => <button key={x.id} className="mv handover" onClick={() => onMove(x.id)}><Ic n="right" s={15} />Hand over<span className="k">to {b.team(x.teamId)?.name}</span></button>)}

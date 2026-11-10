@@ -57,3 +57,23 @@ export function workMs(h: WorkHours | null | undefined, a: number, b: number): n
 
 export const dayHours = (h: WorkHours | null | undefined) => h ? (h.end - h.start) / 60 : 24;
 export const hhmm = (min: number) => `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`;
+
+// The instant reached by adding `ms` of working time after `from` (no schedule: calendar time).
+// Used to push a deadline back by the working time a card spent on hold.
+export function addWork(h: WorkHours | null | undefined, from: number, ms: number): number {
+  if (ms <= 0) return from;
+  if (!h || !h.days.length || h.end <= h.start) return from + ms;
+  const w = wall(h.tz, from), hol = new Set(h.holidays);
+  let left = ms;
+  for (let i = 0; i < 3700; i++) {
+    const day = new Date(Date.UTC(w.year, w.month - 1, w.day + i));
+    const y = day.getUTCFullYear(), m = day.getUTCMonth() + 1, d = day.getUTCDate();
+    const key = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    if (!h.days.includes(day.getUTCDay()) || hol.has(key)) continue;
+    const a = Math.max(instant(h.tz, y, m, d, h.start), from), b = instant(h.tz, y, m, d, h.end);
+    if (b <= a) continue;
+    if (b - a >= left) return a + left;
+    left -= b - a;
+  }
+  return from + ms;
+}

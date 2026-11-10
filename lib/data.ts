@@ -58,6 +58,7 @@ export async function tasksFor(projectIds: string[]): Promise<(Task & { projectI
     created: t.createdAt.getTime(), entered: t.enteredColumnAt.getTime(), started: toMs(t.startedAt), deadline: toMs(t.deadlineAt),
     assignees: as.filter(a => a.taskId === t.id).map(a => a.userId), lastTeam: t.lastTeamId,
     subtasks: subs.filter(x => x.taskId === t.id).map(x => ({ id: x.id, title: x.title, deadline: toMs(x.deadlineAt), done: x.done })),
+    hold: t.holdSince ? { since: t.holdSince.getTime(), reason: t.holdReason ?? '' } : null, paused: t.pausedMs,
     commentCount: cm.filter(c => c.taskId === t.id).length, fileCount: at.filter(a => a.taskId === t.id).length,
   }));
 }
@@ -74,7 +75,7 @@ export async function taskDetail(taskId: string) {
     files: files.filter(f => !f.commentId).map(file),
     comments: comments.map(c => ({ id: c.id, who: c.userId, kind: c.kind, text: c.body, at: c.createdAt.getTime(), files: files.filter(f => f.commentId === c.id).map(file) })),
     log: events.map(e => ({ who: e.userId, text: e.text, at: e.createdAt.getTime() })),
-    stints: stints.map(x => ({ col: x.columnId, start: x.startedAt.getTime(), end: x.endedAt.getTime() })),
+    stints: stints.map(x => ({ col: x.columnId, start: x.startedAt.getTime(), end: x.endedAt.getTime(), paused: x.pausedMs })),
   };
 }
 export type TaskDetail = Awaited<ReturnType<typeof taskDetail>>;
