@@ -126,7 +126,7 @@ export function ProjectView({ snap, initialTask }: { snap: Snapshot; initialTask
       </div>
       <div className="legend">
         <span><i className="s-ok" /><i className="s-warn" /><i className="s-bad" /> Dot: time in the current column, yellow at 80%, red when over</span>
-        <span><b style={{ background: 'color-mix(in srgb,var(--ok) 7%,var(--surface))' }} /><b style={{ background: 'color-mix(in srgb,var(--warn) 13%,var(--surface))' }} /><b style={{ background: 'color-mix(in srgb,var(--bad) 10%,var(--surface))' }} /> Card color: time to the overall deadline</span>
+        <span><b className="bg-ok" /><b className="bg-warn" /><b className="bg-bad" /> Card border: time to the overall deadline</span>
         <span className="muted">Counted in <Link href="/hours" className="link">working hours</Link></span>
       </div>
     </section>
