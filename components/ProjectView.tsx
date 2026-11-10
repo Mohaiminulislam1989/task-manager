@@ -126,7 +126,7 @@ export function ProjectView({ snap, initialTask }: { snap: Snapshot; initialTask
       </div>
       <div className="legend">
         <span><i className="s-ok" /><i className="s-warn" /><i className="s-bad" /> Dot: time in the current column, yellow at 80%, red when over</span>
-        <span><b className="bg-ok" /><b className="bg-warn" /><b className="bg-bad" /> Card bottom edge: time to the overall deadline</span>
+        <span><b className="bg-ok" /><b className="bg-warn" /><b className="bg-bad" /> Card shadow: time to the overall deadline</span>
         <span className="muted">Counted in <Link href="/hours" className="link">working hours</Link></span>
       </div>
     </section>

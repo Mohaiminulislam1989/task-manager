@@ -3,7 +3,7 @@
 A production-line Kanban for agency work. Each project is a line of teams, each team owns its columns, and every column has a time estimate. Cards move left to right, team by team, from a shared **To do** backlog to **Done**.
 
 - **Card dot** (top right): time in the current column. Green, yellow at 80% of the column's estimate, red when over.
-- **Card bottom edge**: the same rule against the task's overall deadline.
+- **Card shadow**: the same rule against the task's overall deadline.
 - **Roles**: Super admin, Head of projects, Project manager, Team lead, Team member. See *People & roles → What each role can do* in the app.
 - **Moves**: members move cards inside their own team. Leads hand over to the next team, send back with a reason, start backlog tasks, and mark tasks done. Moving a task into To do or Done always needs a note. Only the project manager and admins reopen finished tasks.
 - **Working hours**: every clock counts working time only, in the organisation's time zone, skipping days off and holidays. On the board, one day means one working day. The Super admin sets this on **Working hours** (account menu); everyone else can see it.
