@@ -1064,3 +1064,8 @@ fieldset.field legend { font-size: 12.5px; font-weight: 600; color: var(--ink-2)
 :root[data-look="retro"] .legend b.bg-ok { box-shadow: 3px 3px 0 var(--ok) } :root[data-look="retro"] .legend b.bg-warn { box-shadow: 3px 3px 0 var(--warn) } :root[data-look="retro"] .legend b.bg-bad { box-shadow: 3px 3px 0 var(--bad) }
 .sw-retro { background: linear-gradient(180deg, #000080 0 34%, #c0c0c0 34% 100%); border-color: #008080 !important }
 :root[data-look="retro"] .search input { background: transparent; box-shadow: none }
+
+/* theme list scrolls inside the account menu, and the menu never runs off a short screen */
+.me-menu { max-height: calc(100dvh - 72px); overflow-y: auto; overscroll-behavior: contain }
+.theme-row { max-height: 146px; overflow-y: auto; overscroll-behavior: contain; padding: 4px 4px 4px 2px; scrollbar-width: thin; scrollbar-color: var(--muted) transparent }
+.theme-row::-webkit-scrollbar { width: 6px } .theme-row::-webkit-scrollbar-thumb { background: var(--muted); border-radius: 3px }
