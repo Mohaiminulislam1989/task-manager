@@ -83,6 +83,11 @@ export const tasks = pgTable('tasks', {
   createdAt: at('created_at').notNull().defaultNow(),
   startedAt: at('started_at'),
   enteredColumnAt: at('entered_column_at').notNull().defaultNow(),
+  // On hold (waiting on the client, say): both clocks stop at holdSince until someone resumes.
+  holdSince: at('hold_since'),
+  holdReason: text('hold_reason'),
+  // Working time this card spent on hold in its current column; reset when it moves.
+  pausedMs: bigint('paused_ms', { mode: 'number' }).notNull().default(0),
   createdBy: uuid('created_by').notNull().references(() => users.id),
 }, t => [index('tasks_project_idx').on(t.projectId)]);
 
@@ -107,6 +112,7 @@ export const stints = pgTable('stints', {
   columnId: uuid('column_id').notNull().references(() => columns.id),
   startedAt: at('started_at').notNull(),
   endedAt: at('ended_at').notNull(),
+  pausedMs: bigint('paused_ms', { mode: 'number' }).notNull().default(0), // working time on hold, not counted
 });
 
 export const comments = pgTable('comments', {

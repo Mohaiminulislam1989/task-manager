@@ -142,3 +142,14 @@ test('assignees follow the column owners when a card moves', () => {
   // Done and To do keep whoever had it
   assert.deepEqual(b.assigneesAfterMove(task('design', { assignees: ['rafi'] }), 'done'), ['rafi']);
 });
+
+test('on hold freezes both clocks; paused time is not counted', () => {
+  const b = as('karim');
+  const running = task('copy', { entered: 0, deadline: 10 * H });
+  const held = task('copy', { entered: 0, deadline: 10 * H, hold: { since: 2 * H, reason: 'client' } });
+  assert.equal(b.colStatus(held, 9 * H).left, 4 * H);     // 6h estimate, 2h used before hold
+  assert.equal(b.colStatus(running, 9 * H).lv, 'bad');
+  assert.equal(b.dlStatus(held, 50 * H).lv, 'ok');        // deadline passed in calendar time, but frozen
+  const resumed = task('copy', { entered: 0, paused: 3 * H });
+  assert.equal(b.colStatus(resumed, 5 * H).left, 4 * H);  // 5h elapsed − 3h on hold = 2h used
+});

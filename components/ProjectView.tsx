@@ -79,11 +79,11 @@ export function ProjectView({ snap, initialTask }: { snap: Snapshot; initialTask
   const card = (k: BoardTask, canDrag: boolean) => {
     const cs = b.colStatus(k, now), ds = b.dlStatus(k, now);
     const done = k.subtasks.filter(s => s.done).length, overdue = k.subtasks.filter(s => !s.done && s.deadline && s.deadline < now).length;
-    return <article key={k.id} className={`card ${cs.lv === 'done' ? 'done' : cs.lv === 'todo' ? 'todo' + (ds.lv === 'none' ? '' : ' bg-' + ds.lv) : 'bg-' + ds.lv} ${matches(k) ? '' : 'dim'} ${dragId === k.id ? 'dragging' : ''}`}
+    return <article key={k.id} className={`card ${k.hold ? 'on-hold ' : ''}${cs.lv === 'done' ? 'done' : cs.lv === 'todo' ? 'todo' + (ds.lv === 'none' ? '' : ' bg-' + ds.lv) : 'bg-' + ds.lv} ${matches(k) ? '' : 'dim'} ${dragId === k.id ? 'dragging' : ''}`}
       draggable={canDrag} tabIndex={0} aria-label={k.title} onClick={() => setOpen(k.id)} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(k.id); } }}
       onDragStart={e => { setDragId(k.id); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', k.id); }} onDragEnd={() => setDragId(null)}>
       <span className={`dot s-${cs.lv}`} title={cs.lv === 'done' ? 'Finished' : cs.lv === 'todo' ? 'Not started' : b.left(cs.left) + ' in this column'} />
-      <span className={`timer t-${cs.lv}`}>{cs.lv === 'done' ? <><Ic n="ok" s={13} />Finished {fmtDate(k.entered, true).split(',')[0]}</> : cs.lv === 'todo' ? 'Not started' : <><Ic n="clock" s={13} />{b.left(cs.left)}</>}</span>
+      <span className={`timer t-${cs.lv}`}>{cs.lv === 'done' ? <><Ic n="ok" s={13} />Finished {fmtDate(k.entered, true).split(',')[0]}</> : cs.lv === 'todo' ? 'Not started' : k.hold ? <span className="held" title={`On hold: ${k.hold.reason}`}><Ic n="pause" s={12} />On hold · {b.left(cs.left)}</span> : <><Ic n="clock" s={13} />{b.left(cs.left)}</>}</span>
       <h4>{k.title}</h4>
       <div className="c-meta">
         <span className={`m ${ds.lv === 'bad' ? 'bad' : ''}`} title="Overall deadline"><Ic n="cal" s={13} />{k.deadline ? fmtDate(k.deadline, true).split(',')[0] : 'No deadline'}</span>
@@ -127,6 +127,7 @@ export function ProjectView({ snap, initialTask }: { snap: Snapshot; initialTask
       <div className="legend">
         <span><i className="s-ok" /><i className="s-warn" /><i className="s-bad" /> Dot: time in the current column, yellow at 80%, red when over</span>
         <span><b className="bg-ok" /><b className="bg-warn" /><b className="bg-bad" /> Card shadow: time to the overall deadline</span>
+        <span className="held"><Ic n="pause" s={11} />On hold: both clocks stopped</span>
         <span className="muted">Counted in <Link href="/hours" className="link">working hours</Link></span>
       </div>
     </section>
@@ -233,7 +234,7 @@ function ListView({ snap, b, now, matches, onOpen, onMove, onAdd }: { snap: Snap
                 <span className="lmeta">{k.subtasks.length > 0 && <span><Ic n="check" s={12} />{done}/{k.subtasks.length}</span>}{k.commentCount > 0 && <span><Ic n="chat" s={12} />{k.commentCount}</span>}{k.fileCount > 0 && <span><Ic n="clip" s={12} />{k.fileCount}</span>}</span></div></div>
               <div className="lc stage" role="cell" style={{ ['--tc' as string]: `var(${t?.color ?? '--t6'})` }}><span className="sw" /><span className="st-txt"><b>{c.name}</b><small>{'special' in c && c.special ? (c.id === 'todo' ? 'Backlog' : 'Finished') : t?.name}</small></span>
                 {targets.length > 0 && <select className="lmove" aria-label={`Move ${k.title}`} value="" onChange={e => { if (e.target.value) onMove(k, e.target.value); }}><option value="">Move…</option>{targets.map(x => <option key={x.id} value={x.id}>{moveLabel(k, x)}</option>)}</select>}</div>
-              <div className={`lc time t-${cs.lv}`} role="cell"><span className="lbl">In column</span>{cs.lv === 'done' ? 'Finished' : cs.lv === 'todo' ? 'Not started' : <><Ic n="clock" s={12} />{b.left(cs.left)}</>}</div>
+              <div className={`lc time t-${cs.lv}`} role="cell"><span className="lbl">In column</span>{cs.lv === 'done' ? 'Finished' : cs.lv === 'todo' ? 'Not started' : k.hold ? <span className="held" title={k.hold.reason}><Ic n="pause" s={11} />On hold · {b.left(cs.left)}</span> : <><Ic n="clock" s={12} />{b.left(cs.left)}</>}</div>
               <div className={`lc ldue d-${ds.lv}`} role="cell"><span className="lbl">Deadline</span>{k.deadline ? <><span>{fmtDate(k.deadline, true)}</span>{ds.lv !== 'done' && ds.lv !== 'none' && <small>{b.left(ds.left)}</small>}</> : <span className="muted">No deadline</span>}</div>
               <div className="lc who" role="cell"><Avs ids={k.assignees} />{k.assignees.length === 1 ? <span className="nm">{people[k.assignees[0]]?.name}</span> : k.assignees.length ? null : <span className="muted">Nobody</span>}</div>
             </div>;

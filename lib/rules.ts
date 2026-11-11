@@ -19,6 +19,8 @@ export interface Task {
   col: string; // a column id, or 'todo' / 'done'
   created: number; entered: number; started: number | null; deadline: number | null;
   assignees: string[]; lastTeam: string | null; subtasks: Subtask[];
+  // On hold: both clocks freeze at hold.since. paused = working ms already spent on hold in this column.
+  hold?: { since: number; reason: string } | null; paused?: number;
 }
 // hours: the organisation's working hours; every clock counts only working time. Missing means calendar time.
 export interface ProjectShape { id: string; name: string; managerId: string; teams: Team[]; columns: Column[]; hours?: WorkHours | null }
@@ -62,6 +64,8 @@ export class Board {
   teamIdx(tid: string) { return this.teams.findIndex(t => t.id === tid); }
   get isPM() { return this.role?.kind === 'pm'; }
   canWorkIn(tid: string | null) { return this.isPM || (tid == null ? this.role?.kind === 'lead' : this.role?.team === tid); }
+  // Putting a card on hold, or resuming it: anyone who can work it, while it is on the line.
+  canHold(t: Task) { const c = this.col(t.col); return !!c && !('special' in c && c.special) && this.canWorkIn(c.teamId); }
   canBacklog() { return this.isPM || this.role?.kind === 'lead'; }
   canCreateIn(tid: string) { return this.isPM || (this.role?.kind === 'lead' && this.role.team === tid); }
   canEditCols(tid: string) { return this.canCreateIn(tid); }
@@ -135,12 +139,14 @@ export class Board {
     const c = this.col(tk.col)!;
     if ('final' in c && c.final) return { lv: 'done' as Level, frac: 0, left: 0 };
     if ('todo' in c && c.todo) return { lv: 'todo' as Level, frac: 0, left: 0 };
-    const used = this.work(tk.entered, now), budget = c.estH * H;
+    const at = tk.hold ? Math.min(now, tk.hold.since) : now;
+    const used = Math.max(0, this.work(tk.entered, at) - (tk.paused ?? 0)), budget = c.estH * H;
     return { lv: level(used / budget), frac: used / budget, left: budget - used };
   }
   dlStatus(tk: Task, now: number) {
     if (tk.col === 'done') return { lv: 'done' as Level, frac: 0, left: 0 };
     if (!tk.deadline) return { lv: 'none' as Level, frac: 0, left: 0 };
+    if (tk.hold) now = Math.min(now, tk.hold.since);
     const from = tk.started ?? tk.created, span = this.work(from, tk.deadline), used = this.work(from, now);
     const frac = span > 0 ? used / span : now >= tk.deadline ? 1 : 0;
     return { lv: now > tk.deadline ? 'bad' as Level : level(frac), frac, left: this.work(now, tk.deadline) };
