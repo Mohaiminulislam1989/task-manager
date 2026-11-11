@@ -53,18 +53,24 @@ function Header({ me, projects, notes, unreadCount, canDash, isAdmin, canCreate 
   </>;
 }
 
-const LOOKS = [{ id: 'violet', name: 'Violet' }, { id: 'orbs', name: 'Orbs' }, { id: 'ocean', name: 'Ocean' }, { id: 'sunset', name: 'Sunset' }, { id: 'frost', name: 'Frost' }] as const;
+const LOOKS = [{ id: 'violet', name: 'Violet' }, { id: 'orbs', name: 'Orbs' }, { id: 'ocean', name: 'Ocean' }, { id: 'sunset', name: 'Sunset' }, { id: 'frost', name: 'Frost' }, { id: 'modern', name: 'Modern' }, { id: 'minimal', name: 'Minimalist' }, { id: 'classic', name: 'Classic' }, { id: 'retro', name: 'Retro' }] as const;
 
 /** Theme choice is per device (localStorage); the root layout applies it before first paint. */
 function ThemePicker() {
   const [look, setLook] = useState('violet');
-  useEffect(() => { setLook(document.documentElement.dataset.look ?? 'violet'); }, []);
+  const row = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const cur = document.documentElement.dataset.look ?? 'violet'; setLook(cur);
+    // the list scrolls; bring the current theme into view when the menu opens
+    const r = row.current, on = r?.children[LOOKS.findIndex(l => l.id === cur)] as HTMLElement | undefined;
+    if (r && on) r.scrollTop = on.offsetTop - r.offsetTop - 4;
+  }, []);
   const pick = (id: string) => {
     setLook(id);
     if (id === 'violet') delete document.documentElement.dataset.look; else document.documentElement.dataset.look = id;
     try { localStorage.setItem('lb-look', id); } catch { /* private mode: theme lasts for this visit only */ }
   };
-  return <div className="theme-pick"><small>Theme</small><div className="theme-row" role="group" aria-label="Theme">
+  return <div className="theme-pick"><small>Theme</small><div className="theme-row" ref={row} role="group" aria-label="Theme">
     {LOOKS.map(l => <button key={l.id} type="button" aria-pressed={look === l.id} onClick={() => pick(l.id)}><i className={`sw-${l.id}`} />{l.name}</button>)}
   </div></div>;
 }
