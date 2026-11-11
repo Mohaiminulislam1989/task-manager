@@ -1069,3 +1069,6 @@ fieldset.field legend { font-size: 12.5px; font-weight: 600; color: var(--ink-2)
 .me-menu { max-height: calc(100dvh - 72px); overflow-y: auto; overscroll-behavior: contain }
 .theme-row { max-height: 146px; overflow-y: auto; overscroll-behavior: contain; padding: 4px 4px 4px 2px; scrollbar-width: thin; scrollbar-color: var(--muted) transparent }
 .theme-row::-webkit-scrollbar { width: 6px } .theme-row::-webkit-scrollbar-thumb { background: var(--muted); border-radius: 3px }
+
+/* card deal entrance (components/deal.ts): columns stop clipping while cards fly in */
+.dealing .col-body, .dealing .cols, .dealing .col { overflow: visible }
