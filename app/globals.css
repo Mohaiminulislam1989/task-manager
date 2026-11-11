@@ -18,11 +18,11 @@
   --mono: ui-monospace, "SF Mono", "SFMono-Regular", Menlo, "Cascadia Mono", monospace;
   color-scheme: dark;
 }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]):not([data-look]) {
   --wall: radial-gradient(900px 640px at 8% 92%, rgba(220,70,160,.45), transparent 62%), radial-gradient(820px 600px at 96% 6%, rgba(40,160,230,.38), transparent 60%),
     radial-gradient(700px 520px at 60% 55%, rgba(130,80,230,.30), transparent 65%), linear-gradient(135deg, #3f4bb8 0%, #4e2a78 100%);
 } }
-:root[data-theme="dark"] {
+:root[data-theme="dark"]:not([data-look]) {
   --wall: radial-gradient(900px 640px at 8% 92%, rgba(220,70,160,.45), transparent 62%), radial-gradient(820px 600px at 96% 6%, rgba(40,160,230,.38), transparent 60%),
     radial-gradient(700px 520px at 60% 55%, rgba(130,80,230,.30), transparent 65%), linear-gradient(135deg, #3f4bb8 0%, #4e2a78 100%);
 }
@@ -803,22 +803,22 @@ fieldset.field legend { font-size: 12.5px; font-weight: 600; color: var(--ink-2)
 
 /* no blur support, or the user asked for less transparency: fall back to solid surfaces */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  :root { --glass: rgba(70,62,160,.92); --glass-2: rgba(84,74,178,.94); --glass-3: #3a3090; --card: rgba(96,86,190,.95) }
+  :root:not([data-look="frost"]) { --glass: rgba(70,62,160,.92); --glass-2: rgba(84,74,178,.94); --glass-3: #3a3090; --card: rgba(96,86,190,.95) }
 }
 @media (prefers-reduced-transparency: reduce) {
-  :root, :root[data-theme="dark"] { --glass: #4a42a8; --glass-2: #554cb6; --glass-3: #3a3090; --card: #5f56c2; --wall: linear-gradient(135deg, #5a63c8, #634190) }
+  :root:not([data-look="frost"]) { --glass: #4a42a8; --glass-2: #554cb6; --glass-3: #3a3090; --card: #5f56c2; --wall: linear-gradient(135deg, #5a63c8, #634190) }
 }
 /* native controls on the dark glass */
-option, optgroup { color: #1e1a4d; background: #fff }
-::placeholder { color: rgba(255,255,255,.55) }
-.btn.primary, .mv.handover { background: linear-gradient(180deg, #ffffff, #e8e6ff); color: #2a2463; border-color: transparent; box-shadow: inset 0 1px 0 #fff, 0 6px 18px rgba(25,10,70,.28) }
-.btn.primary:hover { filter: brightness(1.03) }
-.mv.handover .k { color: #4a4380 }
-.seg button.on, .seg.layout button.on, .views button.on, .views a.on { background: rgba(255,255,255,.92); color: #2a2463; box-shadow: 0 2px 8px rgba(25,10,70,.22) }
-.fchip.on { background: #fff; color: #2a2463; border-color: #fff } .fchip.on span { background: rgba(42,36,99,.12); color: #2a2463 }
-.toast { background: rgba(30,22,80,.78) }
-.page h1, .pane-head h1, .d-title h2, .team-head h2, .auth-card h1 { text-shadow: 0 1px 3px rgba(20,8,60,.28) }
-.card h4 { font-weight: 650 }
+:root:not([data-look="frost"]) option, :root:not([data-look="frost"]) optgroup { color: #1e1a4d; background: #fff }
+:root:not([data-look="frost"]) ::placeholder { color: rgba(255,255,255,.55) }
+:root:not([data-look="frost"]) .btn.primary, :root:not([data-look="frost"]) .mv.handover { background: linear-gradient(180deg, #ffffff, #e8e6ff); color: #2a2463; border-color: transparent; box-shadow: inset 0 1px 0 #fff, 0 6px 18px rgba(25,10,70,.28) }
+:root:not([data-look="frost"]) .btn.primary:hover { filter: brightness(1.03) }
+:root:not([data-look="frost"]) .mv.handover .k { color: #4a4380 }
+:root:not([data-look="frost"]) .seg button.on, :root:not([data-look="frost"]) .seg.layout button.on, :root:not([data-look="frost"]) .views button.on, :root:not([data-look="frost"]) .views a.on { background: rgba(255,255,255,.92); color: #2a2463; box-shadow: 0 2px 8px rgba(25,10,70,.22) }
+:root:not([data-look="frost"]) .fchip.on { background: #fff; color: #2a2463; border-color: #fff } :root:not([data-look="frost"]) .fchip.on span { background: rgba(42,36,99,.12); color: #2a2463 }
+:root:not([data-look="frost"]) .toast { background: rgba(30,22,80,.78) }
+:root:not([data-look="frost"]) .page h1, :root:not([data-look="frost"]) .pane-head h1, :root:not([data-look="frost"]) .d-title h2, :root:not([data-look="frost"]) .team-head h2, :root:not([data-look="frost"]) .auth-card h1 { text-shadow: 0 1px 3px rgba(20,8,60,.28) }
+:root:not([data-look="frost"]) .card h4 { font-weight: 650 }
 
 /* ==== Glass, round 2: thinner glass, light sheen, floating cards ====
    Deadline status moved from the card background to a soft colored shadow (owner's call, 2026-11-10):
@@ -867,21 +867,73 @@ option, optgroup { color: #1e1a4d; background: #fff }
 
 /* ==== Glassmorphism readability: on the purple gradient, red/green/yellow text alone is too faint,
    so status text sits on a small tinted chip, and labels whose meaning is carried by a stripe stay white. */
-.c-meta .m.bad, .timer.t-bad, .tbl td.hot, .tbl small.hot, .lc.time.t-bad, .lc.ldue.d-bad > span, .due.bad {
+:root:not([data-look="frost"]) .c-meta .m.bad, :root:not([data-look="frost"]) .timer.t-bad, :root:not([data-look="frost"]) .tbl td.hot, :root:not([data-look="frost"]) .tbl small.hot, :root:not([data-look="frost"]) .lc.time.t-bad, :root:not([data-look="frost"]) .lc.ldue.d-bad > span, :root:not([data-look="frost"]) .due.bad {
   color: #fff; background: color-mix(in srgb, var(--bad) 62%, transparent); border-radius: 6px; padding: 0 6px; font-weight: 600 }
-.tbl td.hot { background: none } .tbl td.hot::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--bad); margin-right: 6px; vertical-align: middle }
-.timer.t-warn, .lc.time.t-warn { color: #fff; background: color-mix(in srgb, var(--warn) 45%, transparent); border-radius: 6px; padding: 0 6px }
-.timer { margin-right: 22px }
-.tile .tl, .st-overdue-tile .tl, .st-risk-tile .tl, .st-ontime-tile .tl { color: #fff }
-.tile::before { width: 5px }
-.team-tag { color: #fff; background: color-mix(in srgb, var(--tc) 48%, transparent); box-shadow: inset 0 0 0 1px rgba(255,255,255,.25) }
-.mv.back { color: #fff; border-color: color-mix(in srgb, var(--bad) 70%, transparent); background: color-mix(in srgb, var(--bad) 22%, transparent) }
-.mv.donebtn { color: #fff; border-color: color-mix(in srgb, var(--ok) 70%, transparent); background: color-mix(in srgb, var(--ok) 20%, transparent) }
-.pill.p-bad { color: #fff; background: color-mix(in srgb, var(--bad) 45%, transparent); border-color: color-mix(in srgb, var(--bad) 70%, transparent) }
-.pill.p-warn { background: color-mix(in srgb, var(--warn) 30%, transparent); border-color: color-mix(in srgb, var(--warn) 65%, transparent) }
-.pill.p-ok { background: color-mix(in srgb, var(--ok) 22%, transparent); border-color: color-mix(in srgb, var(--ok) 60%, transparent) }
-.st-overdue-t { color: #fff; background: color-mix(in srgb, var(--bad) 55%, transparent) } .st-risk-t { color: #2a2463; background: var(--warn) } .st-ontime-t { color: #fff; background: color-mix(in srgb, var(--ok) 45%, transparent) }
-.stint .tag.bad { color: #fff; background: color-mix(in srgb, var(--bad) 55%, transparent) } .stint .tag.ok { color: #fff; background: color-mix(in srgb, var(--ok) 40%, transparent) } .stint .tag.warn { color: #2a2463; background: var(--warn) }
-.form-error { color: #fff; background: color-mix(in srgb, var(--bad) 55%, transparent); padding: 6px 10px; border-radius: 8px }
-.lane-done .lane-ic { color: var(--ok) }
-.link { color: #d6ecff }
+:root:not([data-look="frost"]) .tbl td.hot { background: none } :root:not([data-look="frost"]) .tbl td.hot::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--bad); margin-right: 6px; vertical-align: middle }
+:root:not([data-look="frost"]) .timer.t-warn, :root:not([data-look="frost"]) .lc.time.t-warn { color: #fff; background: color-mix(in srgb, var(--warn) 45%, transparent); border-radius: 6px; padding: 0 6px }
+:root:not([data-look="frost"]) .timer { margin-right: 22px }
+:root:not([data-look="frost"]) .tile .tl, :root:not([data-look="frost"]) .st-overdue-tile .tl, :root:not([data-look="frost"]) .st-risk-tile .tl, :root:not([data-look="frost"]) .st-ontime-tile .tl { color: #fff }
+:root:not([data-look="frost"]) .tile::before { width: 5px }
+:root:not([data-look="frost"]) .team-tag { color: #fff; background: color-mix(in srgb, var(--tc) 48%, transparent); box-shadow: inset 0 0 0 1px rgba(255,255,255,.25) }
+:root:not([data-look="frost"]) .mv.back { color: #fff; border-color: color-mix(in srgb, var(--bad) 70%, transparent); background: color-mix(in srgb, var(--bad) 22%, transparent) }
+:root:not([data-look="frost"]) .mv.donebtn { color: #fff; border-color: color-mix(in srgb, var(--ok) 70%, transparent); background: color-mix(in srgb, var(--ok) 20%, transparent) }
+:root:not([data-look="frost"]) .pill.p-bad { color: #fff; background: color-mix(in srgb, var(--bad) 45%, transparent); border-color: color-mix(in srgb, var(--bad) 70%, transparent) }
+:root:not([data-look="frost"]) .pill.p-warn { background: color-mix(in srgb, var(--warn) 30%, transparent); border-color: color-mix(in srgb, var(--warn) 65%, transparent) }
+:root:not([data-look="frost"]) .pill.p-ok { background: color-mix(in srgb, var(--ok) 22%, transparent); border-color: color-mix(in srgb, var(--ok) 60%, transparent) }
+:root:not([data-look="frost"]) .st-overdue-t { color: #fff; background: color-mix(in srgb, var(--bad) 55%, transparent) } :root:not([data-look="frost"]) .st-risk-t { color: #2a2463; background: var(--warn) } :root:not([data-look="frost"]) .st-ontime-t { color: #fff; background: color-mix(in srgb, var(--ok) 45%, transparent) }
+:root:not([data-look="frost"]) .stint .tag.bad { color: #fff; background: color-mix(in srgb, var(--bad) 55%, transparent) } :root:not([data-look="frost"]) .stint .tag.ok { color: #fff; background: color-mix(in srgb, var(--ok) 40%, transparent) } :root:not([data-look="frost"]) .stint .tag.warn { color: #2a2463; background: var(--warn) }
+:root:not([data-look="frost"]) .form-error { color: #fff; background: color-mix(in srgb, var(--bad) 55%, transparent); padding: 6px 10px; border-radius: 8px }
+:root:not([data-look="frost"]) .lane-done .lane-ic { color: var(--ok) }
+:root:not([data-look="frost"]) .link { color: #d6ecff }
+
+
+/* ==== Themes (account menu > Theme). Stored per device; default is Violet (no data-look).
+   Every theme keeps the status rules: dot green/yellow at 80%/red, deadline = colored card shadow. */
+:root[data-look="orbs"] {
+  --surface: #151a35; --accent: #8fd3ff; --accent-ink: #151a35;
+  --glass: rgba(255,255,255,.08); --glass-2: rgba(255,255,255,.11); --glass-3: rgba(22,26,52,.66); --card: rgba(255,255,255,.10);
+  --edge: rgba(255,255,255,.28); --edge-soft: rgba(255,255,255,.18);
+  --blur: saturate(170%) blur(20px); --blur-lg: saturate(180%) blur(34px); --blur-card: saturate(160%) blur(16px);
+  --wall: radial-gradient(340px 340px at 14% 28%, rgba(255,140,60,.95), rgba(255,140,60,0) 70%), radial-gradient(420px 420px at 86% 18%, rgba(255,60,140,.85), rgba(255,60,140,0) 70%),
+    radial-gradient(480px 480px at 72% 88%, rgba(70,120,255,.90), rgba(70,120,255,0) 70%), radial-gradient(360px 360px at 22% 92%, rgba(40,220,210,.75), rgba(40,220,210,0) 70%),
+    radial-gradient(300px 300px at 48% 52%, rgba(170,90,255,.55), rgba(170,90,255,0) 70%), #0b0f22;
+}
+:root[data-look="ocean"] {
+  --surface: #0b2a5a; --accent: #9be7ff; --accent-ink: #0b2a5a; --glass-3: rgba(10,44,92,.62);
+  --wall: radial-gradient(900px 640px at 10% 90%, rgba(40,230,200,.55), transparent 62%), radial-gradient(820px 600px at 95% 5%, rgba(120,200,255,.50), transparent 60%),
+    linear-gradient(135deg, #0ea5e9 0%, #1e40af 100%);
+}
+:root[data-look="sunset"] {
+  --surface: #4a1240; --accent: #ffe08a; --accent-ink: #4a1240; --glass-3: rgba(92,24,70,.62);
+  --wall: radial-gradient(900px 640px at 90% 90%, rgba(120,60,240,.55), transparent 62%), radial-gradient(820px 600px at 8% 6%, rgba(255,200,90,.55), transparent 60%),
+    linear-gradient(135deg, #f97316 0%, #db2777 55%, #7c3aed 100%);
+}
+:root[data-look="frost"] {
+  --bg: #eef1f7; --surface: #ffffff; --raised: rgba(120,130,155,.11); --ink: #10151d; --ink-2: #353e4a; --muted: #5f6a78; --line: rgba(40,52,74,.14); --line-2: rgba(40,52,74,.08);
+  --accent: #0a6cf0; --accent-ink: #ffffff;
+  --t1: #2a74ec; --t2: #8d4fd8; --t3: #0b9a8f; --t4: #d93f7a; --t5: #e2700f; --t6: #66768a;
+  --ok: #1f9e4a; --warn: #e8a200; --bad: #e0332b;
+  /* glass: wallpaper shows through translucent, blurred layers */
+  --glass: rgba(255,255,255,.30); --glass-2: rgba(255,255,255,.42); --glass-3: rgba(250,251,253,.64); --card: rgba(255,255,255,.46);
+  --sheen: linear-gradient(160deg, rgba(255,255,255,.55), rgba(255,255,255,.10) 38%, rgba(255,255,255,0) 60%);
+  --edge: rgba(255,255,255,.75); --edge-soft: rgba(255,255,255,.5); --glass-line: rgba(30,42,64,.10); --ring: rgba(255,255,255,.95);
+  --blur: saturate(190%) blur(26px); --blur-lg: saturate(200%) blur(48px); --blur-card: saturate(180%) blur(18px);
+  --wall: radial-gradient(1100px 760px at -5% -10%, rgba(80,140,255,.80), transparent 62%), radial-gradient(900px 680px at 105% 0%, rgba(186,120,255,.70), transparent 60%),
+    radial-gradient(700px 520px at 45% 55%, rgba(255,190,120,.40), transparent 65%), radial-gradient(1000px 760px at 75% 110%, rgba(40,210,190,.62), transparent 62%), radial-gradient(760px 600px at 0% 105%, rgba(255,120,175,.58), transparent 60%), #e9eef8;
+  --shadow-1: 0 1px 2px rgba(20,30,55,.06), 0 2px 6px rgba(20,30,55,.05);
+  --shadow-2: 0 8px 24px rgba(20,30,55,.10), 0 1px 3px rgba(20,30,55,.06);
+  --shadow-3: 0 30px 70px rgba(20,30,55,.22), 0 4px 14px rgba(20,30,55,.08);
+  color-scheme: light;
+}
+:root[data-look="frost"] .page h1, :root[data-look="frost"] .pane-head h1 { text-shadow: none }
+
+/* theme picker in the account menu */
+.theme-pick { padding: 6px 10px 8px; border-top: 1px solid var(--glass-line); margin-top: 4px }
+.theme-pick small { display: block; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin-bottom: 6px }
+.theme-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px }
+.theme-row button { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 4px 0; border-radius: 8px; font-size: 11px; color: var(--ink-2) }
+.theme-row button:hover { background: var(--raised) }
+.theme-row i { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--edge); box-shadow: 0 2px 6px rgba(0,0,0,.2) }
+.theme-row button[aria-pressed="true"] i { outline: 2px solid var(--ink); outline-offset: 2px }
+.sw-violet { background: linear-gradient(135deg, #667eea, #764ba2) } .sw-orbs { background: radial-gradient(circle at 30% 30%, #ff8c3c, transparent 45%), radial-gradient(circle at 75% 70%, #4678ff, transparent 50%), radial-gradient(circle at 75% 25%, #ff3c8c, transparent 45%), #0b0f22 }
+.sw-ocean { background: linear-gradient(135deg, #0ea5e9, #1e40af) } .sw-sunset { background: linear-gradient(135deg, #f97316, #db2777, #7c3aed) } .sw-frost { background: linear-gradient(135deg, #cfe0ff, #f3e8ff, #c9f3ec) }
