@@ -42,7 +42,7 @@ function Header({ me, projects, notes, unreadCount, canDash, isAdmin, canCreate 
       <button className="icon-btn" id="bellBtn" aria-label={`Notifications${unreadN ? `, ${unreadN} unread` : ''}`} onClick={() => setBell(x => !x)}><Ic n="bell" s={19} />{unreadN > 0 && <span className="count">{unreadN > 99 ? '99+' : unreadN}</span>}</button>
       <button className="me" onClick={() => setMenu(x => !x)} aria-haspopup="menu" aria-expanded={menu}><Av id={me.id} size="sm" /><span className="me-name">{me.name} · {roleLabel}</span></button>
     </div></header>
-    {menu && <div className="pop me-menu" role="menu"><Link href="/account" role="menuitem" onClick={() => setMenu(false)}><Ic n="user" s={15} />Account and password</Link><Link href="/hours" role="menuitem" onClick={() => setMenu(false)}><Ic n="clock" s={15} />Working hours</Link><form action={logout}><button role="menuitem"><Ic n="out" s={15} />Sign out</button></form></div>}
+    {menu && <div className="pop me-menu" role="menu"><Link href="/account" role="menuitem" onClick={() => setMenu(false)}><Ic n="user" s={15} />Account and password</Link><Link href="/hours" role="menuitem" onClick={() => setMenu(false)}><Ic n="clock" s={15} />Working hours</Link><form action={logout}><button role="menuitem"><Ic n="out" s={15} />Sign out</button></form><ThemePicker /></div>}
     {bell && <div className="pop" id="notes" ref={pop}>
       <div className="pop-h"><h3>Notifications</h3>{unreadN > 0 && <button className="link" onClick={async () => { await markNotificationsRead('all'); router.refresh(); }}>Mark all read</button>}</div>
       {notes.length ? <ol>{notes.map(n => <li key={n.id} onClick={async () => { setBell(false); if (!n.read) markNotificationsRead([n.id]); router.push(n.projectId ? `/p/${n.projectId}${n.taskId ? `?task=${n.taskId}` : ''}` : '/'); }}>
@@ -51,4 +51,20 @@ function Header({ me, projects, notes, unreadCount, canDash, isAdmin, canCreate 
         : <div className="empty">You are all caught up. Comments, mentions and task updates show up here.</div>}
     </div>}
   </>;
+}
+
+const LOOKS = [{ id: 'violet', name: 'Violet' }, { id: 'orbs', name: 'Orbs' }, { id: 'ocean', name: 'Ocean' }, { id: 'sunset', name: 'Sunset' }, { id: 'frost', name: 'Frost' }] as const;
+
+/** Theme choice is per device (localStorage); the root layout applies it before first paint. */
+function ThemePicker() {
+  const [look, setLook] = useState('violet');
+  useEffect(() => { setLook(document.documentElement.dataset.look ?? 'violet'); }, []);
+  const pick = (id: string) => {
+    setLook(id);
+    if (id === 'violet') delete document.documentElement.dataset.look; else document.documentElement.dataset.look = id;
+    try { localStorage.setItem('lb-look', id); } catch { /* private mode: theme lasts for this visit only */ }
+  };
+  return <div className="theme-pick"><small>Theme</small><div className="theme-row" role="group" aria-label="Theme">
+    {LOOKS.map(l => <button key={l.id} type="button" aria-pressed={look === l.id} onClick={() => pick(l.id)}><i className={`sw-${l.id}`} />{l.name}</button>)}
+  </div></div>;
 }
