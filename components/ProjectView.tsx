@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useState, useTransition } from 'react';
+import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
+import { deal } from './deal';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Board, DONE, TODO, fmtDate, roleIn, type AnyCol, type Column, type OrgRole, type ProjectShape, type Task } from '@/lib/rules';
@@ -54,6 +55,16 @@ export function ProjectView({ snap, initialTask }: { snap: Snapshot; initialTask
   const [, start] = useTransition();
   const me = snap.me.id, r = b.role!;
   useEffect(() => { if (initialTask) setOpen(initialTask); }, [initialTask]);
+  // deal the cards in when the board opens (not on refreshes: those keep the same project and layout)
+  const boardRef = useRef<HTMLDivElement>(null);
+  const pendingDeal = useRef<{ id: string; x: number; y: number } | null>(null);
+  useEffect(() => { if (layout === 'board') deal(boardRef.current); }, [snap.project.id, layout]);
+  // ...and when a team or lane is opened, deal its cards from the strip that was clicked
+  useEffect(() => {
+    const p = pendingDeal.current; if (!p) return; pendingDeal.current = null;
+    deal(boardRef.current?.querySelector<HTMLElement>(`[data-sec="${p.id}"]`) ?? null, p);
+  }, [expanded]);
+  const openSection = (id: string, e: React.MouseEvent) => { pendingDeal.current = { id, x: e.clientX, y: e.clientY }; setExpanded(x => ({ ...x, [id]: true })); };
 
   const matches = (k: BoardTask) => (!mine || k.assignees.includes(me)) && (!q || (k.title + ' ' + k.desc).toLowerCase().includes(q.toLowerCase()));
 
@@ -101,9 +112,9 @@ export function ProjectView({ snap, initialTask }: { snap: Snapshot; initialTask
     const cards = snap.tasks.filter(k => k.col === c.id).sort((a, z) => c.id === 'done' ? z.entered - a.entered : 0);
     const canDrag = c.id === 'todo' ? b.canBacklog() : b.isPM;
     const dp = dropProps(c.id);
-    if (!expanded[c.id]) return <button key={c.id} {...dp} className={`strip lane-strip ${c.id === 'todo' ? 'lane-todo' : 'lane-done'} ${dp.className}`} style={{ ['--tc' as string]: 'var(--t6)' }} onClick={() => setExpanded(x => ({ ...x, [c.id]: true }))} title={`Open ${c.name}`}>
+    if (!expanded[c.id]) return <button key={c.id} {...dp} className={`strip lane-strip ${c.id === 'todo' ? 'lane-todo' : 'lane-done'} ${dp.className}`} style={{ ['--tc' as string]: 'var(--t6)' }} onClick={e => openSection(c.id, e)} title={`Open ${c.name}`}>
       <span className="lane-ic"><Ic n={c.id === 'todo' ? 'plus' : 'ok'} s={15} /></span><span className="n">{cards.length}</span><span className="name">{c.name}</span><span className="peek"><Ic n="right" s={15} /></span></button>;
-    return <section key={c.id} className={`team lane ${c.id === 'todo' ? 'lane-todo' : 'lane-done'}`} style={{ ['--tc' as string]: 'var(--t6)' }}>
+    return <section key={c.id} data-sec={c.id} className={`team lane ${c.id === 'todo' ? 'lane-todo' : 'lane-done'}`} style={{ ['--tc' as string]: 'var(--t6)' }}>
       <div className="team-head"><div className="team-id"><span className="lane-ic"><Ic n={c.id === 'todo' ? 'plus' : 'ok'} /></span><div><h2>{c.name}</h2>
         <div className="sub">{c.id === 'todo' ? 'Backlog for later · no clock' : 'Finished work · clocks stopped'}</div></div></div>
         <div className="team-right"><span className="n-badge">{cards.length}</span><button className="ghost" onClick={() => setExpanded(x => ({ ...x, [c.id]: false }))}>Collapse</button></div></div>
@@ -132,15 +143,15 @@ export function ProjectView({ snap, initialTask }: { snap: Snapshot; initialTask
       </div>
     </section>
 
-    {layout === 'board' ? <div className="board-wrap gutter"><div className="board">
+    {layout === 'board' ? <div className="board-wrap gutter"><div className="board" ref={boardRef}>
       {lane(TODO)}
       {b.teams.map((t, ti) => {
         const mineTeam = b.canWorkIn(t.id), cols = b.teamCols(t.id);
         const tasks = snap.tasks.filter(k => cols.some(c => c.id === k.col));
-        if (!mineTeam && !expanded[t.id]) return <button key={t.id} className="strip" style={{ ['--tc' as string]: `var(${t.color})` }} onClick={() => setExpanded(x => ({ ...x, [t.id]: true }))} title={`Open ${t.name} (view only)`}>
+        if (!mineTeam && !expanded[t.id]) return <button key={t.id} className="strip" style={{ ['--tc' as string]: `var(${t.color})` }} onClick={e => openSection(t.id, e)} title={`Open ${t.name} (view only)`}>
           <span className="team-swatch" /><span className="n">{tasks.length}</span><span className="dots">{tasks.map(k => <i key={k.id} className={`s-${b.colStatus(k, now).lv}`} />)}</span>
           <span className="name">{t.name}</span><span className="peek"><Ic n="eye" /></span></button>;
-        return <section key={t.id} className="team" style={{ ['--tc' as string]: `var(${t.color})` }}>
+        return <section key={t.id} data-sec={t.id} className="team" style={{ ['--tc' as string]: `var(${t.color})` }}>
           <div className="team-head">
             <div className="team-id"><span className="team-swatch" /><div><h2>{b.canRenameTeam(t.id) ? <InlineName value={t.name} label="team" maxLength={60} save={n => renameTeam(t.id, n)} /> : t.name}</h2><div className="sub">Step {ti + 1} of {b.teams.length}{t.leadId ? ` · Lead ${people[t.leadId]?.name}` : ''}</div></div></div>
             <div className="team-right"><Avs ids={[t.leadId, ...t.memberIds].filter(Boolean) as string[]} />
