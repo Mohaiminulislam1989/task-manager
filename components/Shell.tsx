@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { ANIMS, deal, getAnim, setAnim, type AnimId } from './deal';
 import type { OrgRole, Person } from '@/lib/rules';
 import { logout, markNotificationsRead } from '@/app/actions';
 import { Av, Ic, PeopleProvider, SearchProvider, ToastProvider, relTime, useLiveRefresh, useNow, useSearch } from './ui';
@@ -42,7 +43,7 @@ function Header({ me, projects, notes, unreadCount, canDash, isAdmin, canCreate 
       <button className="icon-btn" id="bellBtn" aria-label={`Notifications${unreadN ? `, ${unreadN} unread` : ''}`} onClick={() => setBell(x => !x)}><Ic n="bell" s={19} />{unreadN > 0 && <span className="count">{unreadN > 99 ? '99+' : unreadN}</span>}</button>
       <button className="me" onClick={() => setMenu(x => !x)} aria-haspopup="menu" aria-expanded={menu}><Av id={me.id} size="sm" /><span className="me-name">{me.name} · {roleLabel}</span></button>
     </div></header>
-    {menu && <div className="pop me-menu" role="menu"><Link href="/account" role="menuitem" onClick={() => setMenu(false)}><Ic n="user" s={15} />Account and password</Link><Link href="/hours" role="menuitem" onClick={() => setMenu(false)}><Ic n="clock" s={15} />Working hours</Link><form action={logout}><button role="menuitem"><Ic n="out" s={15} />Sign out</button></form><ThemePicker /></div>}
+    {menu && <div className="pop me-menu" role="menu"><Link href="/account" role="menuitem" onClick={() => setMenu(false)}><Ic n="user" s={15} />Account and password</Link><Link href="/hours" role="menuitem" onClick={() => setMenu(false)}><Ic n="clock" s={15} />Working hours</Link><form action={logout}><button role="menuitem"><Ic n="out" s={15} />Sign out</button></form><ThemePicker /><AnimPicker /></div>}
     {bell && <div className="pop" id="notes" ref={pop}>
       <div className="pop-h"><h3>Notifications</h3>{unreadN > 0 && <button className="link" onClick={async () => { await markNotificationsRead('all'); router.refresh(); }}>Mark all read</button>}</div>
       {notes.length ? <ol>{notes.map(n => <li key={n.id} onClick={async () => { setBell(false); if (!n.read) markNotificationsRead([n.id]); router.push(n.projectId ? `/p/${n.projectId}${n.taskId ? `?task=${n.taskId}` : ''}` : '/'); }}>
@@ -54,6 +55,16 @@ function Header({ me, projects, notes, unreadCount, canDash, isAdmin, canCreate 
 }
 
 const LOOKS = [{ id: 'violet', name: 'Violet' }, { id: 'orbs', name: 'Orbs' }, { id: 'ocean', name: 'Ocean' }, { id: 'sunset', name: 'Sunset' }, { id: 'frost', name: 'Frost' }, { id: 'modern', name: 'Modern' }, { id: 'minimal', name: 'Minimalist' }, { id: 'classic', name: 'Classic' }, { id: 'retro', name: 'Retro' }] as const;
+
+/** Card entrance animation, per device. Picking one plays it on the board straight away as a preview. */
+function AnimPicker() {
+  const [anim, setA] = useState<AnimId>('deal');
+  useEffect(() => { setA(getAnim()); }, []);
+  const pick = (id: AnimId) => { setA(id); setAnim(id); deal(document.querySelector<HTMLElement>('.board'), id); };
+  return <div className="theme-pick"><small>Card animation</small><div className="anim-row" role="group" aria-label="Card animation">
+    {ANIMS.map(a => <button key={a.id} type="button" aria-pressed={anim === a.id} onClick={() => pick(a.id)}>{a.name}</button>)}
+  </div></div>;
+}
 
 /** Theme choice is per device (localStorage); the root layout applies it before first paint. */
 function ThemePicker() {

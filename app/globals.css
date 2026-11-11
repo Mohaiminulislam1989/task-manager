@@ -1070,5 +1070,11 @@ fieldset.field legend { font-size: 12.5px; font-weight: 600; color: var(--ink-2)
 .theme-row { max-height: 146px; overflow-y: auto; overscroll-behavior: contain; padding: 4px 4px 4px 2px; scrollbar-width: thin; scrollbar-color: var(--muted) transparent }
 .theme-row::-webkit-scrollbar { width: 6px } .theme-row::-webkit-scrollbar-thumb { background: var(--muted); border-radius: 3px }
 
-/* card deal entrance (components/deal.ts): columns stop clipping while cards fly in */
-.dealing .col-body, .dealing .cols, .dealing .col { overflow: visible }
+/* board panning: drag an empty spot to scroll left and right */
+.board-wrap { cursor: grab } .board-wrap .card, .board-wrap button, .board-wrap a, .board-wrap input { cursor: auto }
+.board-wrap .card { cursor: pointer } .board-wrap button, .board-wrap a { cursor: pointer }
+.board-wrap.panning, .board-wrap.panning * { cursor: grabbing !important; user-select: none }
+/* card animation picker in the account menu */
+.anim-row { display: flex; flex-wrap: wrap; gap: 6px }
+.me-menu .anim-row button { width: auto; padding: 4px 10px; border-radius: 999px; font-size: 12px; border: 1px solid var(--glass-line); color: var(--ink-2) }
+.me-menu .anim-row button[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink) }

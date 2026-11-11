@@ -57,14 +57,29 @@ export function ProjectView({ snap, initialTask }: { snap: Snapshot; initialTask
   useEffect(() => { if (initialTask) setOpen(initialTask); }, [initialTask]);
   // deal the cards in when the board opens (not on refreshes: those keep the same project and layout)
   const boardRef = useRef<HTMLDivElement>(null);
-  const pendingDeal = useRef<{ id: string; x: number; y: number } | null>(null);
+  const pendingDeal = useRef<string | null>(null);
   useEffect(() => { if (layout === 'board') deal(boardRef.current); }, [snap.project.id, layout]);
-  // ...and when a team or lane is opened, deal its cards from the strip that was clicked
+  // ...and when a team or lane is opened
   useEffect(() => {
-    const p = pendingDeal.current; if (!p) return; pendingDeal.current = null;
-    deal(boardRef.current?.querySelector<HTMLElement>(`[data-sec="${p.id}"]`) ?? null, p);
+    const id = pendingDeal.current; if (!id) return; pendingDeal.current = null;
+    deal(boardRef.current?.querySelector<HTMLElement>(`[data-sec="${id}"]`) ?? null);
   }, [expanded]);
-  const openSection = (id: string, e: React.MouseEvent) => { pendingDeal.current = { id, x: e.clientX, y: e.clientY }; setExpanded(x => ({ ...x, [id]: true })); };
+  const openSection = (id: string) => { pendingDeal.current = id; setExpanded(x => ({ ...x, [id]: true })); };
+  // pan the board left and right by dragging an empty spot with the mouse (touch already scrolls natively)
+  const pan = useRef<{ x: number; left: number; moved: boolean } | null>(null);
+  const onPanDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType !== 'mouse' || e.button !== 0) return;
+    if ((e.target as HTMLElement).closest('.card, button, a, input, textarea, select, label, [contenteditable], .inline-edit, .owners, h2, h3')) return;
+    pan.current = { x: e.clientX, left: e.currentTarget.scrollLeft, moved: false };
+  };
+  const onPanMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const p = pan.current; if (!p) return;
+    const dx = e.clientX - p.x;
+    if (!p.moved && Math.abs(dx) < 4) return;
+    if (!p.moved) { p.moved = true; e.currentTarget.setPointerCapture(e.pointerId); e.currentTarget.classList.add('panning'); }
+    e.currentTarget.scrollLeft = p.left - dx;
+  };
+  const onPanEnd = (e: React.PointerEvent<HTMLDivElement>) => { if (!pan.current) return; pan.current = null; e.currentTarget.classList.remove('panning'); };
 
   const matches = (k: BoardTask) => (!mine || k.assignees.includes(me)) && (!q || (k.title + ' ' + k.desc).toLowerCase().includes(q.toLowerCase()));
 
@@ -112,7 +127,7 @@ export function ProjectView({ snap, initialTask }: { snap: Snapshot; initialTask
     const cards = snap.tasks.filter(k => k.col === c.id).sort((a, z) => c.id === 'done' ? z.entered - a.entered : 0);
     const canDrag = c.id === 'todo' ? b.canBacklog() : b.isPM;
     const dp = dropProps(c.id);
-    if (!expanded[c.id]) return <button key={c.id} {...dp} className={`strip lane-strip ${c.id === 'todo' ? 'lane-todo' : 'lane-done'} ${dp.className}`} style={{ ['--tc' as string]: 'var(--t6)' }} onClick={e => openSection(c.id, e)} title={`Open ${c.name}`}>
+    if (!expanded[c.id]) return <button key={c.id} {...dp} className={`strip lane-strip ${c.id === 'todo' ? 'lane-todo' : 'lane-done'} ${dp.className}`} style={{ ['--tc' as string]: 'var(--t6)' }} onClick={() => openSection(c.id)} title={`Open ${c.name}`}>
       <span className="lane-ic"><Ic n={c.id === 'todo' ? 'plus' : 'ok'} s={15} /></span><span className="n">{cards.length}</span><span className="name">{c.name}</span><span className="peek"><Ic n="right" s={15} /></span></button>;
     return <section key={c.id} data-sec={c.id} className={`team lane ${c.id === 'todo' ? 'lane-todo' : 'lane-done'}`} style={{ ['--tc' as string]: 'var(--t6)' }}>
       <div className="team-head"><div className="team-id"><span className="lane-ic"><Ic n={c.id === 'todo' ? 'plus' : 'ok'} /></span><div><h2>{c.name}</h2>
@@ -143,12 +158,12 @@ export function ProjectView({ snap, initialTask }: { snap: Snapshot; initialTask
       </div>
     </section>
 
-    {layout === 'board' ? <div className="board-wrap gutter"><div className="board" ref={boardRef}>
+    {layout === 'board' ? <div className="board-wrap gutter" onPointerDown={onPanDown} onPointerMove={onPanMove} onPointerUp={onPanEnd} onPointerCancel={onPanEnd}><div className="board" ref={boardRef}>
       {lane(TODO)}
       {b.teams.map((t, ti) => {
         const mineTeam = b.canWorkIn(t.id), cols = b.teamCols(t.id);
         const tasks = snap.tasks.filter(k => cols.some(c => c.id === k.col));
-        if (!mineTeam && !expanded[t.id]) return <button key={t.id} className="strip" style={{ ['--tc' as string]: `var(${t.color})` }} onClick={e => openSection(t.id, e)} title={`Open ${t.name} (view only)`}>
+        if (!mineTeam && !expanded[t.id]) return <button key={t.id} className="strip" style={{ ['--tc' as string]: `var(${t.color})` }} onClick={() => openSection(t.id)} title={`Open ${t.name} (view only)`}>
           <span className="team-swatch" /><span className="n">{tasks.length}</span><span className="dots">{tasks.map(k => <i key={k.id} className={`s-${b.colStatus(k, now).lv}`} />)}</span>
           <span className="name">{t.name}</span><span className="peek"><Ic n="eye" /></span></button>;
         return <section key={t.id} data-sec={t.id} className="team" style={{ ['--tc' as string]: `var(${t.color})` }}>
