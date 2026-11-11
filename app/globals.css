@@ -803,22 +803,22 @@ fieldset.field legend { font-size: 12.5px; font-weight: 600; color: var(--ink-2)
 
 /* no blur support, or the user asked for less transparency: fall back to solid surfaces */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) { --glass: rgba(70,62,160,.92); --glass-2: rgba(84,74,178,.94); --glass-3: #3a3090; --card: rgba(96,86,190,.95) }
+  :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) { --glass: rgba(70,62,160,.92); --glass-2: rgba(84,74,178,.94); --glass-3: #3a3090; --card: rgba(96,86,190,.95) }
 }
 @media (prefers-reduced-transparency: reduce) {
-  :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) { --glass: #4a42a8; --glass-2: #554cb6; --glass-3: #3a3090; --card: #5f56c2; --wall: linear-gradient(135deg, #5a63c8, #634190) }
+  :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) { --glass: #4a42a8; --glass-2: #554cb6; --glass-3: #3a3090; --card: #5f56c2; --wall: linear-gradient(135deg, #5a63c8, #634190) }
 }
 /* native controls on the dark glass */
-:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) option, :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) optgroup { color: #1e1a4d; background: #fff }
-:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) ::placeholder { color: rgba(255,255,255,.55) }
-:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) .btn.primary, :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) .mv.handover { background: linear-gradient(180deg, #ffffff, #e8e6ff); color: #2a2463; border-color: transparent; box-shadow: inset 0 1px 0 #fff, 0 6px 18px rgba(25,10,70,.28) }
-:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) .btn.primary:hover { filter: brightness(1.03) }
-:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) .mv.handover .k { color: #4a4380 }
-:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) .seg button.on, :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) .seg.layout button.on, :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) .views button.on, :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) .views a.on { background: rgba(255,255,255,.92); color: #2a2463; box-shadow: 0 2px 8px rgba(25,10,70,.22) }
-:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) .fchip.on { background: #fff; color: #2a2463; border-color: #fff } :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) .fchip.on span { background: rgba(42,36,99,.12); color: #2a2463 }
-:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) .toast { background: rgba(30,22,80,.78) }
-:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) .page h1, :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) .pane-head h1, :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) .d-title h2, :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) .team-head h2, :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) .auth-card h1 { text-shadow: 0 1px 3px rgba(20,8,60,.28) }
-:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) .card h4 { font-weight: 650 }
+:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) option, :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) optgroup { color: #1e1a4d; background: #fff }
+:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) ::placeholder { color: rgba(255,255,255,.55) }
+:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) .btn.primary, :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) .mv.handover { background: linear-gradient(180deg, #ffffff, #e8e6ff); color: #2a2463; border-color: transparent; box-shadow: inset 0 1px 0 #fff, 0 6px 18px rgba(25,10,70,.28) }
+:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) .btn.primary:hover { filter: brightness(1.03) }
+:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) .mv.handover .k { color: #4a4380 }
+:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) .seg button.on, :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) .seg.layout button.on, :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) .views button.on, :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) .views a.on { background: rgba(255,255,255,.92); color: #2a2463; box-shadow: 0 2px 8px rgba(25,10,70,.22) }
+:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) .fchip.on { background: #fff; color: #2a2463; border-color: #fff } :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) .fchip.on span { background: rgba(42,36,99,.12); color: #2a2463 }
+:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) .toast { background: rgba(30,22,80,.78) }
+:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) .page h1, :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) .pane-head h1, :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) .d-title h2, :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) .team-head h2, :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) .auth-card h1 { text-shadow: 0 1px 3px rgba(20,8,60,.28) }
+:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) .card h4 { font-weight: 650 }
 
 /* ==== Glass, round 2: thinner glass, light sheen, floating cards ====
    Deadline status moved from the card background to a soft colored shadow (owner's call, 2026-11-10):
@@ -867,24 +867,24 @@ fieldset.field legend { font-size: 12.5px; font-weight: 600; color: var(--ink-2)
 
 /* ==== Glassmorphism readability: on the purple gradient, red/green/yellow text alone is too faint,
    so status text sits on a small tinted chip, and labels whose meaning is carried by a stripe stay white. */
-:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) .c-meta .m.bad, :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) .timer.t-bad, :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) .tbl td.hot, :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) .tbl small.hot, :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) .lc.time.t-bad, :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) .lc.ldue.d-bad > span, :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) .due.bad {
+:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) .c-meta .m.bad, :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) .timer.t-bad, :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) .tbl td.hot, :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) .tbl small.hot, :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) .lc.time.t-bad, :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) .lc.ldue.d-bad > span, :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) .due.bad {
   color: #fff; background: color-mix(in srgb, var(--bad) 62%, transparent); border-radius: 6px; padding: 0 6px; font-weight: 600 }
-:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) .tbl td.hot { background: none } :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) .tbl td.hot::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--bad); margin-right: 6px; vertical-align: middle }
-:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) .timer.t-warn, :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) .lc.time.t-warn { color: #fff; background: color-mix(in srgb, var(--warn) 45%, transparent); border-radius: 6px; padding: 0 6px }
-:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) .timer { margin-right: 22px }
-:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) .tile .tl, :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) .st-overdue-tile .tl, :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) .st-risk-tile .tl, :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) .st-ontime-tile .tl { color: #fff }
-:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) .tile::before { width: 5px }
-:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) .team-tag { color: #fff; background: color-mix(in srgb, var(--tc) 48%, transparent); box-shadow: inset 0 0 0 1px rgba(255,255,255,.25) }
-:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) .mv.back { color: #fff; border-color: color-mix(in srgb, var(--bad) 70%, transparent); background: color-mix(in srgb, var(--bad) 22%, transparent) }
-:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) .mv.donebtn { color: #fff; border-color: color-mix(in srgb, var(--ok) 70%, transparent); background: color-mix(in srgb, var(--ok) 20%, transparent) }
-:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) .pill.p-bad { color: #fff; background: color-mix(in srgb, var(--bad) 45%, transparent); border-color: color-mix(in srgb, var(--bad) 70%, transparent) }
-:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) .pill.p-warn { background: color-mix(in srgb, var(--warn) 30%, transparent); border-color: color-mix(in srgb, var(--warn) 65%, transparent) }
-:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) .pill.p-ok { background: color-mix(in srgb, var(--ok) 22%, transparent); border-color: color-mix(in srgb, var(--ok) 60%, transparent) }
-:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) .st-overdue-t { color: #fff; background: color-mix(in srgb, var(--bad) 55%, transparent) } :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) .st-risk-t { color: #2a2463; background: var(--warn) } :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) .st-ontime-t { color: #fff; background: color-mix(in srgb, var(--ok) 45%, transparent) }
-:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) .stint .tag.bad { color: #fff; background: color-mix(in srgb, var(--bad) 55%, transparent) } :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) .stint .tag.ok { color: #fff; background: color-mix(in srgb, var(--ok) 40%, transparent) } :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) .stint .tag.warn { color: #2a2463; background: var(--warn) }
-:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) .form-error { color: #fff; background: color-mix(in srgb, var(--bad) 55%, transparent); padding: 6px 10px; border-radius: 8px }
-:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) .lane-done .lane-ic { color: var(--ok) }
-:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]) .link { color: #d6ecff }
+:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) .tbl td.hot { background: none } :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) .tbl td.hot::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--bad); margin-right: 6px; vertical-align: middle }
+:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) .timer.t-warn, :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) .lc.time.t-warn { color: #fff; background: color-mix(in srgb, var(--warn) 45%, transparent); border-radius: 6px; padding: 0 6px }
+:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) .timer { margin-right: 22px }
+:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) .tile .tl, :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) .st-overdue-tile .tl, :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) .st-risk-tile .tl, :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) .st-ontime-tile .tl { color: #fff }
+:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) .tile::before { width: 5px }
+:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) .team-tag { color: #fff; background: color-mix(in srgb, var(--tc) 48%, transparent); box-shadow: inset 0 0 0 1px rgba(255,255,255,.25) }
+:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) .mv.back { color: #fff; border-color: color-mix(in srgb, var(--bad) 70%, transparent); background: color-mix(in srgb, var(--bad) 22%, transparent) }
+:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) .mv.donebtn { color: #fff; border-color: color-mix(in srgb, var(--ok) 70%, transparent); background: color-mix(in srgb, var(--ok) 20%, transparent) }
+:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) .pill.p-bad { color: #fff; background: color-mix(in srgb, var(--bad) 45%, transparent); border-color: color-mix(in srgb, var(--bad) 70%, transparent) }
+:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) .pill.p-warn { background: color-mix(in srgb, var(--warn) 30%, transparent); border-color: color-mix(in srgb, var(--warn) 65%, transparent) }
+:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) .pill.p-ok { background: color-mix(in srgb, var(--ok) 22%, transparent); border-color: color-mix(in srgb, var(--ok) 60%, transparent) }
+:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) .st-overdue-t { color: #fff; background: color-mix(in srgb, var(--bad) 55%, transparent) } :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) .st-risk-t { color: #2a2463; background: var(--warn) } :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) .st-ontime-t { color: #fff; background: color-mix(in srgb, var(--ok) 45%, transparent) }
+:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) .stint .tag.bad { color: #fff; background: color-mix(in srgb, var(--bad) 55%, transparent) } :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) .stint .tag.ok { color: #fff; background: color-mix(in srgb, var(--ok) 40%, transparent) } :root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) .stint .tag.warn { color: #2a2463; background: var(--warn) }
+:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) .form-error { color: #fff; background: color-mix(in srgb, var(--bad) 55%, transparent); padding: 6px 10px; border-radius: 8px }
+:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) .lane-done .lane-ic { color: var(--ok) }
+:root:not([data-look="frost"]):not([data-look="minimal"]):not([data-look="classic"]):not([data-look="retro"]) .link { color: #d6ecff }
 
 
 /* ==== Themes (account menu > Theme). Stored per device; default is Violet (no data-look).
@@ -930,7 +930,7 @@ fieldset.field legend { font-size: 12.5px; font-weight: 600; color: var(--ink-2)
 /* theme picker in the account menu */
 .theme-pick { padding: 6px 10px 8px; border-top: 1px solid var(--glass-line); margin-top: 4px }
 .theme-pick small { display: block; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin-bottom: 6px }
-.theme-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px }
+.theme-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px }
 .theme-row button { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 4px 0; border-radius: 8px; font-size: 11px; color: var(--ink-2) }
 .theme-row button:hover { background: var(--raised) }
 .theme-row i { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--edge); box-shadow: 0 2px 6px rgba(0,0,0,.2) }
@@ -1012,3 +1012,55 @@ fieldset.field legend { font-size: 12.5px; font-weight: 600; color: var(--ink-2)
 :root[data-look="classic"] .app .views a, :root[data-look="classic"] .page .seg button { color: rgba(255,255,255,.9) }
 :root[data-look="classic"] .app .views a.on, :root[data-look="classic"] .page .seg button.on { background: #fff; color: #172b4d; box-shadow: 0 1px 2px rgba(9,30,66,.25) }
 :root[data-look="classic"] .page :is(.link, .held) { color: #fff }
+
+/* ---- Retro: late-90s desktop. Teal desktop, grey bevelled windows, navy title bars, square corners.
+   Deadline status stays a colored shadow, drawn as a hard offset shadow to suit the look. ---- */
+:root[data-look="retro"] {
+  --bg: #008080; --surface: #c0c0c0; --raised: #d4d0c8; --ink: #000000; --ink-2: #1a1a1a; --muted: #404040; --line: #808080; --line-2: #a0a0a0;
+  --accent: #000080; --accent-ink: #ffffff;
+  --t1: #0000a8; --t2: #800080; --t3: #008080; --t4: #a00050; --t5: #a05000; --t6: #505050;
+  --ok: #008a00; --warn: #e0b000; --bad: #d00000;
+  --glass: #c0c0c0; --glass-2: #c0c0c0; --glass-3: #c0c0c0; --card: #ffffff;
+  --sheen: none; --blur: none; --blur-lg: none; --blur-card: none;
+  --edge: #ffffff; --edge-soft: #808080; --glass-line: #808080; --ring: #ffffff;
+  --wall: #008080;
+  --shadow-1: none; --shadow-2: none; --shadow-3: 2px 2px 0 #000;
+  --sans: Tahoma, "MS Sans Serif", Geneva, Verdana, sans-serif;
+  --bevel-out: inset -1px -1px #0a0a0a, inset 1px 1px #ffffff, inset -2px -2px #808080, inset 2px 2px #dfdfdf;
+  --bevel-in: inset -1px -1px #ffffff, inset 1px 1px #808080, inset -2px -2px #dfdfdf, inset 2px 2px #0a0a0a;
+  color-scheme: light;
+}
+:root[data-look="retro"] body { font-size: 13px; -webkit-font-smoothing: auto }
+:root[data-look="retro"] :is(.app, .team, .strip, .lane, .lane-strip, .card, .panel, .tile, .filters, .plist, .ltable, .projcard, .rcard, .lp, .b-team, .b-final, .auth-card, .pop, .mpop, dialog, .drawer,
+  .btn, .seg, .seg button, .views, .views a, .me, .search, .clock, .add, .icon-btn, .team-tag, .pill, .fchip, .subs, .stints, .att, .composer .box, .empty-col, .lane-ic, .n-badge, input, select, textarea, .role-chip, .team-swatch, .col, .tpl, .box-card) { border-radius: 0 }
+:root[data-look="retro"] :is(.app, body::before) { background: #c0c0c0; border-color: #808080; box-shadow: inset 0 -1px #808080, inset 0 1px #fff }
+:root[data-look="retro"] :is(.panel, .tile, .filters, .plist, .ltable, .projcard, .rcard, .lp, .b-team, .b-final, .auth-card, .pop, .mpop, dialog, .drawer, .tpl, .box-card) { background: #c0c0c0; border: 0; box-shadow: var(--bevel-out), 2px 2px 0 rgba(0,0,0,.35) }
+:root[data-look="retro"] :is(.btn, .seg button, .views a, .me, .icon-btn, .add) { background: #c0c0c0; color: #000; border: 0; box-shadow: var(--bevel-out); filter: none }
+:root[data-look="retro"] :is(.btn, .seg button, .views a, .me, .icon-btn, .add):active { box-shadow: var(--bevel-in) }
+:root[data-look="retro"] :is(.seg button.on, .seg.layout button.on, .views a.on) { background: #dfdfdf; color: #000; box-shadow: var(--bevel-in); font-weight: 700 }
+:root[data-look="retro"] .btn.primary { background: #c0c0c0; color: #000; font-weight: 700; box-shadow: 0 0 0 1px #000, var(--bevel-out) }
+:root[data-look="retro"] :is(.seg, .views) { background: transparent; border: 0; box-shadow: none; gap: 2px }
+:root[data-look="retro"] :is(.search, input, select, textarea, .clock) { background: #fff; border: 0; box-shadow: var(--bevel-in) }
+:root[data-look="retro"] .page { color: #fff; --muted: rgba(255,255,255,.88) }
+:root[data-look="retro"] .page h1 { text-shadow: 1px 1px 0 #000 }
+:root[data-look="retro"] .page :is(.link, .held) { color: #fff }
+:root[data-look="retro"] .page :is(.seg, .clock, .filters, .search, .pop) { color: #000; --muted: #404040 }
+:root[data-look="retro"] .role-chip { background: #c0c0c0; color: #000; box-shadow: var(--bevel-out) }
+/* team sections are windows: grey frame, title bar fading from navy into the team's color */
+:root[data-look="retro"] :is(.team, .strip) { background: #c0c0c0; border: 0; box-shadow: var(--bevel-out), 2px 2px 0 rgba(0,0,0,.35); padding: 3px }
+:root[data-look="retro"] .team-head { background: linear-gradient(90deg, #000080, color-mix(in srgb, var(--tc) 75%, #1084d0)); color: #fff; border-bottom: 0; --muted: rgba(255,255,255,.85); --ink: #fff }
+:root[data-look="retro"] .team-head .btn { color: #000; --ink: #000 }
+:root[data-look="retro"] .team-swatch { background: var(--tc); box-shadow: 0 0 0 1px #fff }
+:root[data-look="retro"] :is(.lane, .lane-strip) { background: #c0c0c0; border: 0; box-shadow: var(--bevel-out) }
+/* cards: white with a sunken edge; deadline = hard colored offset shadow */
+:root[data-look="retro"] .card { --dl: rgba(0,0,0,.45); background: #fff; border: 1px solid #000; padding: 9px 11px; transition: none }
+:root[data-look="retro"] :is(.card, .card.bg-ok, .card.bg-warn, .card.bg-bad) { box-shadow: 5px 5px 0 var(--dl); border: 1px solid #000 }
+:root[data-look="retro"] .card.bg-ok { --dl: var(--ok) } :root[data-look="retro"] .card.bg-warn { --dl: var(--warn) } :root[data-look="retro"] .card.bg-bad { --dl: var(--bad) }
+:root[data-look="retro"] .card:hover { transform: translate(-1px, -1px); box-shadow: 6px 6px 0 var(--dl) }
+:root[data-look="retro"] .card.todo { border: 1px dashed #000 }
+:root[data-look="retro"] .card .dot { box-shadow: 0 0 0 1px #000 }
+:root[data-look="retro"] .card.todo .dot { box-shadow: inset 0 0 0 2px var(--muted), 0 0 0 1px #000 }
+:root[data-look="retro"] .legend b { border-radius: 0; border-color: #000 }
+:root[data-look="retro"] .legend b.bg-ok { box-shadow: 3px 3px 0 var(--ok) } :root[data-look="retro"] .legend b.bg-warn { box-shadow: 3px 3px 0 var(--warn) } :root[data-look="retro"] .legend b.bg-bad { box-shadow: 3px 3px 0 var(--bad) }
+.sw-retro { background: linear-gradient(180deg, #000080 0 34%, #c0c0c0 34% 100%); border-color: #008080 !important }
+:root[data-look="retro"] .search input { background: transparent; box-shadow: none }
