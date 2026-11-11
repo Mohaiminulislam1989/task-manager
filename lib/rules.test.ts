@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { Board, roleIn, H, fmtDur, mentionsIn, type ProjectShape, type Task } from './rules.ts';
+import { Board, roleIn, H, fmtDur, involved, mentionsIn, type ProjectShape, type Task } from './rules.ts';
 
 const p: ProjectShape = {
   id: 'p', name: 'Glow & Co', managerId: 'mo',
@@ -10,11 +10,11 @@ const p: ProjectShape = {
     { id: 'media', name: 'Media & Performance', color: '--t3', lineOrder: 2, leadId: 'farhan', memberIds: [] },
   ],
   columns: [
-    { id: 'brief', teamId: 'acct', name: 'Brief', position: 0, estH: 8, ownerIds: [] },
-    { id: 'plan', teamId: 'acct', name: 'Plan', position: 1, estH: 16, ownerIds: [] },
-    { id: 'copy', teamId: 'cre', name: 'Copy', position: 0, estH: 6, ownerIds: [] },
-    { id: 'design', teamId: 'cre', name: 'Design', position: 1, estH: 12, ownerIds: [] },
-    { id: 'setup', teamId: 'media', name: 'Setup', position: 0, estH: 8, ownerIds: [] },
+    { id: 'brief', teamId: 'acct', name: 'Brief', position: 0, estH: 8 },
+    { id: 'plan', teamId: 'acct', name: 'Plan', position: 1, estH: 16 },
+    { id: 'copy', teamId: 'cre', name: 'Copy', position: 0, estH: 6 },
+    { id: 'design', teamId: 'cre', name: 'Design', position: 1, estH: 12 },
+    { id: 'setup', teamId: 'media', name: 'Setup', position: 0, estH: 8 },
   ],
 };
 const task = (col: string, extra: Partial<Task> = {}): Task => ({ id: 't', title: 'T', desc: '', col, created: 0, entered: 0, started: 0, deadline: 100 * H, assignees: [], lastTeam: null, subtasks: [], ...extra });
@@ -131,16 +131,17 @@ test('working hours drive the dot, the deadline colour and day lengths', () => {
   assert.equal(fmtDur(13 * H), '13h 00m');
 });
 
-test('assignees follow the column owners when a card moves', () => {
-  const q: ProjectShape = { ...p, columns: p.columns.map(c => c.id === 'design' ? { ...c, ownerIds: ['rafi'] } : c) };
-  const b = new Board(q, roleIn(q, 'karim', null));
-  assert.deepEqual(b.assigneesAfterMove(task('copy', { assignees: ['karim'] }), 'design'), ['rafi']);
-  // same team, column without owners: keep
-  assert.deepEqual(b.assigneesAfterMove(task('brief', { assignees: ['tanvir'] }), 'plan'), ['tanvir']);
-  // handover into a team without owners: drop people from the old team
-  assert.deepEqual(b.assigneesAfterMove(task('plan', { assignees: ['tanvir'] }), 'copy'), []);
-  // Done and To do keep whoever had it
-  assert.deepEqual(b.assigneesAfterMove(task('design', { assignees: ['rafi'] }), 'done'), ['rafi']);
+test('assignees belong to the task: anyone on the project, and they stay put when it moves', () => {
+  const b = as('karim');
+  assert.deepEqual(b.crew.sort(), ['ayesha', 'farhan', 'karim', 'rafi', 'tanvir']);
+  // a card handed to Media keeps Creative's people until Media's lead adds someone
+  const k = task('setup', { assignees: ['rafi'] });
+  assert.equal(b.hasTeamAssignee(k), false);
+  assert.equal(b.hasTeamAssignee({ ...k, assignees: ['rafi', 'farhan'] }), true);
+  assert.equal(b.hasTeamAssignee(task('todo')), true); // lanes have no team to staff
+  // everyone involved: task assignees plus one person per subtask, no repeats
+  const sub = (id: string, assignee: string | null) => ({ id, title: id, deadline: null, done: false, assignee });
+  assert.deepEqual(involved(task('copy', { assignees: ['karim'], subtasks: [sub('a', 'rafi'), sub('b', 'karim'), sub('c', null)] })), ['karim', 'rafi']);
 });
 
 test('on hold freezes both clocks; paused time is not counted', () => {

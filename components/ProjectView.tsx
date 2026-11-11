@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import { deal } from './deal';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Board, DONE, TODO, fmtDate, roleIn, type AnyCol, type Column, type OrgRole, type ProjectShape, type Task } from '@/lib/rules';
+import { Board, DONE, TODO, fmtDate, involved, roleIn, type AnyCol, type Column, type OrgRole, type ProjectShape, type Task } from '@/lib/rules';
 import { moveTask, renameColumn, renameProject, renameTeam, setColumnEstimate } from '@/app/actions';
 import { Av, Avs, Ic, useNow, usePeople, useSearch, useToast } from './ui';
 import { Drawer } from './Drawer';
@@ -66,7 +66,7 @@ export function ProjectView({ snap, initialTask }: { snap: Snapshot; initialTask
   }, [expanded]);
   const openSection = (id: string, e: React.MouseEvent) => { pendingDeal.current = { id, x: e.clientX, y: e.clientY }; setExpanded(x => ({ ...x, [id]: true })); };
 
-  const matches = (k: BoardTask) => (!mine || k.assignees.includes(me)) && (!q || (k.title + ' ' + k.desc).toLowerCase().includes(q.toLowerCase()));
+  const matches = (k: BoardTask) => (!mine || involved(k).includes(me)) && (!q || (k.title + ' ' + k.desc).toLowerCase().includes(q.toLowerCase()));
 
   const requestMove = (tk: BoardTask, to: string) => {
     const rule = b.moveRule(tk, to);
@@ -168,7 +168,6 @@ export function ProjectView({ snap, initialTask }: { snap: Snapshot; initialTask
                 <span className="col-r"><span className="est" title={`Estimate: ${c.estH} working hours`}><Ic n="clock" s={12} />{b.canEditCols(t.id) ? <InlineName value={String(c.estH)} suffix=" h" kind="number" label="estimate (working hours)" maxLength={6} save={n => setColumnEstimate(c.id, Number(n))} /> : `${c.estH} h`}</span>
                   {b.canEditCols(t.id) && cols.length > 1 && <button className={`col-x ${cards.length ? 'busy' : ''}`} aria-label={`Remove column ${c.name}`} title={cards.length ? 'Move its cards out first' : 'Remove empty column'}
                     onClick={() => cards.length ? toast(`${c.name} still has ${cards.length} card${cards.length > 1 ? 's' : ''}. Move ${cards.length > 1 ? 'them' : 'it'} out first.`) : setDialog({ kind: 'rmcol', col: c })}><Ic n="trash" s={14} /></button>}</span></div>
-              {c.ownerIds.length > 0 && <div className="owners"><Avs ids={c.ownerIds} />{c.ownerIds.map(o => people[o]?.name).join(', ')}</div>}
               <div className="col-body">{cards.length ? cards.map(k => card(k, mineTeam)) : <div className="empty-col">No cards here</div>}</div>
               {b.canCreateIn(t.id) && <button className="add" onClick={() => setDialog({ kind: 'add', col: c.id })}><Ic n="plus" s={14} />Add task</button>}
             </div>;

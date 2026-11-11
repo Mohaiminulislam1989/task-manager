@@ -60,7 +60,9 @@ export function AddTaskDialog({ b, projectId, col, mentionItems, onClose }: { b:
   const people = usePeople(), toast = useToast();
   const backlog = col === 'todo', c = b.col(col)!, t = b.team(c.teamId);
   const choices = backlog ? [] : b.teamCols(t!.id);
-  const crew = backlog ? [...new Set(b.teams.flatMap(x => [x.leadId, ...x.memberIds]).filter(Boolean) as string[])] : [t!.leadId, ...t!.memberIds].filter(Boolean) as string[];
+  // Anyone on the project can be assigned; the team the card starts in is listed first.
+  const own = t ? [t.leadId, ...t.memberIds].filter(Boolean) as string[] : [];
+  const crew = [...own, ...b.crew.filter(p => !own.includes(p))];
   const desc = useRef<MentionHandle>(null), pend = usePending();
   const { pending, submit } = useSubmit(onClose);
   return <Modal onClose={onClose}>
@@ -77,9 +79,9 @@ export function AddTaskDialog({ b, projectId, col, mentionItems, onClose }: { b:
       <div className="field"><span className="flabel">Attachments (optional)</span><div className="att-add"><AttachButton id="file-new" label="Add images or video" onPick={l => pend.add(l, toast)} /><span className="muted">Up to {MAX_MB} MB each</span></div><PendChips p={pend} /></div>
       <div className="row2">
         {!backlog && <div className="field"><label htmlFor="nCol">Start in</label><select id="nCol" name="col" defaultValue={col}>{choices.map(x => <option key={x.id} value={x.id}>{x.name} ({x.estH} h)</option>)}</select></div>}
-        <div className="field"><label htmlFor="nWho">Assignee{backlog ? ' (optional)' : ''}</label><select id="nWho" name="assignee" defaultValue={backlog ? '' : crew[0]}>{backlog && <option value="">Nobody yet</option>}{crew.map(p => <option key={p} value={p}>{people[p]?.name}</option>)}</select></div>
         {backlog && <div className="field"><label htmlFor="nDue">Deadline (optional)</label><input id="nDue" name="deadline" type="datetime-local" /></div>}
       </div>
+      <div className="field"><span className="flabel">Assignees (optional, pick one or more)</span><div className="ownpick">{crew.map(p => <label key={p} className="ownopt"><input type="checkbox" name="assignee" value={p} /><Av id={p} size="sm" />{people[p]?.name}</label>)}</div></div>
       {!backlog && <div className="field"><label htmlFor="nDue">Overall deadline</label><input id="nDue" name="deadline" type="datetime-local" defaultValue={in3days()} required /></div>}
       <div className="field"><label htmlFor="nSubs">Subtasks, one per line (optional)</label><textarea id="nSubs" name="subtasks" placeholder={'Write script\nGet client sign-off'} /></div>
       <div className="actions"><button type="button" className="btn" onClick={onClose}>Cancel</button><button className="btn primary" type="submit" disabled={pending}><Ic n="plus" s={14} />{backlog ? 'Add to backlog' : 'Add task'}</button></div>
@@ -88,8 +90,7 @@ export function AddTaskDialog({ b, projectId, col, mentionItems, onClose }: { b:
 }
 
 export function AddColumnDialog({ b, teamId, onClose }: { b: Board; teamId: string; onClose: () => void }) {
-  const t = b.team(teamId)!, cols = b.teamCols(teamId), crew = [t.leadId, ...t.memberIds].filter(Boolean) as string[];
-  const people = usePeople();
+  const t = b.team(teamId)!, cols = b.teamCols(teamId);
   const { pending, submit } = useSubmit(onClose);
   return <Modal onClose={onClose}>
     <div><h2>Add a column to {t.name}</h2><p className="lead">It joins the line straight away. Cards entering it get its time estimate.</p></div>
@@ -99,7 +100,6 @@ export function AddColumnDialog({ b, teamId, onClose }: { b: Board; teamId: stri
         <div className="field"><label htmlFor="cEst">Time estimate (hours)</label><input id="cEst" name="est" type="number" min="0.5" step="0.5" defaultValue={8} required /></div>
         <div className="field"><label htmlFor="cPos">Position</label><select id="cPos" name="after" defaultValue={cols.at(-1)?.id}><option value="start">First in {t.name}</option>{cols.map(c => <option key={c.id} value={c.id}>After {c.name}</option>)}</select></div>
       </div>
-      <div className="field"><span className="flabel">Responsible (optional)</span><div className="ownpick">{crew.map(p => <label key={p} className="ownopt"><input type="checkbox" name="owners" value={p} /><Av id={p} size="sm" />{people[p]?.name}</label>)}</div></div>
       <p className="muted" style={{ margin: 0 }}>Placing it first or last changes where {t.name} receives and hands over cards.</p>
       <div className="actions"><button type="button" className="btn" onClick={onClose}>Cancel</button><button className="btn primary" type="submit" disabled={pending}><Ic n="plus" s={14} />Add column</button></div>
     </form>

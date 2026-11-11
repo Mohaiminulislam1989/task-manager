@@ -7,8 +7,8 @@ A production-line Kanban for agency work. Each project is a line of teams, each 
 - **Roles**: Super admin, Head of projects, Project manager, Team lead, Team member. See *People & roles → What each role can do* in the app.
 - **Moves**: members move cards inside their own team. Leads hand over to the next team, send back with a reason, start backlog tasks, and mark tasks done. Moving a task into To do or Done always needs a note. Only the project manager and admins reopen finished tasks.
 - **Working hours**: every clock counts working time only, in the organisation's time zone, skipping days off and holidays. On the board, one day means one working day. The Super admin sets this on **Working hours** (account menu); everyone else can see it.
-- **Editing**: team leads rename their team's columns and tasks, change a column's hours, and change a task's assignees and deadline. Anyone on the team adds subtasks. Project managers and admins can do all of it anywhere.
-- **Assignees follow the line**: when a card enters a column with responsible people, they become its assignees.
+- **Editing**: team leads rename their team's columns and tasks, change a column's hours, and change a task's assignees and deadline. Anyone on the team adds subtasks and picks who does each one. Project managers and admins can do all of it anywhere.
+- **Assignees are on tasks, not columns**: a task can have several assignees and each subtask has at most one. Anyone on the project's teams can be picked, and assignees stay with the task as it moves. When a card reaches a team none of its assignees are on, that team's lead is told to add someone. Assignees of the task and its subtasks get a notification for every change to it.
 - **Live board**: open pages check for changes every 8 seconds (and when the tab regains focus) and refresh themselves. If two people move the same card at once, the second move is refused and their board refreshes.
 - Comments, image and video attachments, @mentions of people or teams, in-app notifications, list view, PM dashboard, project builder.
 

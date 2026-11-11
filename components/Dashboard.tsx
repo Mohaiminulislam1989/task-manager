@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
-import { Board, fmtDate, type Column, type ProjectShape, type Task } from '@/lib/rules';
+import { Board, fmtDate, involved, type Column, type ProjectShape, type Task } from '@/lib/rules';
 import { Av, Ic, useNow, usePeople } from './ui';
 
 type Status = 'overdue' | 'risk' | 'ontime' | 'done' | 'backlog';
@@ -44,15 +44,20 @@ export function Dashboard({ admin, canCreate, projects, tasks }: { admin: boolea
 
   const inProj = rows.filter(r => f.project === 'all' || r.p.id === f.project);
   const teamsAvail = [...new Map(inProj.map(r => [r.t.id, r])).values()];
-  const peopleAvail = [...new Set(inProj.flatMap(r => r.k.assignees))].filter(id => people[id]).sort((a, b) => people[a].name.localeCompare(people[b].name));
-  const shown = inProj.filter(r => (f.team === 'all' || r.t.id === f.team) && (f.who === 'all' || r.k.assignees.includes(f.who)) && (f.status === 'all' || r.status === f.status));
+  const peopleAvail = [...new Set(inProj.flatMap(r => involved(r.k)))].filter(id => people[id]).sort((a, b) => people[a].name.localeCompare(people[b].name));
+  const shown = inProj.filter(r => (f.team === 'all' || r.t.id === f.team) && (f.who === 'all' || involved(r.k).includes(f.who)) && (f.status === 'all' || r.status === f.status));
   const c = count(shown), total = shown.length;
   const multi = f.project === 'all' && projects.length > 1;
   const filtered = f.project !== 'all' || f.team !== 'all' || f.who !== 'all' || f.status !== 'all';
   const pct = (n: number) => total ? `${Math.round(n / total * 100)}% of tasks` : 'no tasks';
   const toggle = (k: 'team' | 'who' | 'status', v: string) => setF(x => ({ ...x, [k]: x[k] === v ? 'all' : v }));
   const byTeam = teamsAvail.map(x => ({ t: x.t, p: x.p, list: shown.filter(r => r.t.id === x.t.id) })).filter(g => g.list.length || f.team === 'all');
-  const byWho = peopleAvail.map(id => ({ id, list: shown.filter(r => r.k.assignees.includes(id)), teams: [...new Set(inProj.filter(r => r.k.assignees.includes(id)).map(r => r.t.name))] }))
+  // A person counts on a task when they are assigned to it or to one of its subtasks.
+  const byWho = peopleAvail.map(id => {
+    const list = shown.filter(r => involved(r.k).includes(id));
+    const subs = list.flatMap(r => r.k.subtasks.filter(x => x.assignee === id && !x.done));
+    return { id, list, teams: [...new Set(inProj.filter(r => involved(r.k).includes(id)).map(r => r.t.name))], subs: subs.length, subsLate: subs.filter(x => x.deadline != null && x.deadline < now).length };
+  })
     .filter(g => g.list.length).sort((a, b) => (count(b.list).overdue ?? 0) - (count(a.list).overdue ?? 0) || b.list.length - a.list.length);
   const sorted = [...shown].sort((a, b) => ORDER.indexOf(a.status) - ORDER.indexOf(b.status) || (a.k.deadline ?? Infinity) - (b.k.deadline ?? Infinity));
 
@@ -89,10 +94,10 @@ export function Dashboard({ admin, canCreate, projects, tasks }: { admin: boolea
               <td className="bar-col"><StackBar list={g.list} /></td><Nums list={g.list} /></tr>)
               : <tr><td colSpan={8} className="muted">No tasks match these filters.</td></tr>}
           </tbody></table></div></section>
-        <section className="panel"><div className="panel-h"><h2>By team member</h2><span className="muted">Sorted by overdue tasks</span></div>
+        <section className="panel"><div className="panel-h"><h2>By team member</h2><span className="muted">Tasks they or their subtasks are on · sorted by overdue</span></div>
           <div className="tbl-wrap"><table className="tbl"><Head first="Person" /><tbody>
             {byWho.length ? byWho.map(g => <tr key={g.id} className={`click ${f.who === g.id ? 'sel' : ''}`} onClick={() => toggle('who', g.id)}>
-              <td><span className="tname"><Av id={g.id} /><span><b>{people[g.id].name}</b><small>{g.teams.join(', ')}</small></span></span></td>
+              <td><span className="tname"><Av id={g.id} /><span><b>{people[g.id].name}</b><small>{g.teams.join(', ')}{g.subs > 0 && <> · {g.subs} open subtask{g.subs > 1 ? 's' : ''}{g.subsLate > 0 && <span className="hot">, {g.subsLate} overdue</span>}</>}</small></span></span></td>
               <td className="bar-col"><StackBar list={g.list} /></td><Nums list={g.list} /></tr>)
               : <tr><td colSpan={8} className="muted">No assigned tasks match these filters.</td></tr>}
           </tbody></table></div></section>

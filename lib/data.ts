@@ -18,10 +18,9 @@ export async function projectShapes(orgId: string, ids?: string[]): Promise<(Pro
   const tids = ts.map(t => t.id);
   const tm = tids.length ? await db.select().from(s.teamMembers).where(inArray(s.teamMembers.teamId, tids)) : [];
   const cs = tids.length ? await db.select().from(s.columns).where(inArray(s.columns.teamId, tids)) : [];
-  const co = cs.length ? await db.select().from(s.columnOwners).where(inArray(s.columnOwners.columnId, cs.map(c => c.id))) : [];
   return ps.map(p => {
     const teams = ts.filter(t => t.projectId === p.id).map(t => ({ id: t.id, name: t.name, color: t.color, lineOrder: t.lineOrder, leadId: t.leadId, memberIds: tm.filter(m => m.teamId === t.id).map(m => m.userId) }));
-    const all = cs.filter(c => teams.some(t => t.id === c.teamId)).map(c => ({ id: c.id, teamId: c.teamId, name: c.name, position: c.position, estH: c.estimateMinutes / 60, ownerIds: co.filter(o => o.columnId === c.id).map(o => o.userId), archived: !!c.archivedAt }));
+    const all = cs.filter(c => teams.some(t => t.id === c.teamId)).map(c => ({ id: c.id, teamId: c.teamId, name: c.name, position: c.position, estH: c.estimateMinutes / 60, archived: !!c.archivedAt }));
     return { id: p.id, name: p.name, managerId: p.managerId, hours: org?.hours ?? null, teams, columns: all.filter(c => !c.archived), archived: all.filter(c => c.archived) };
   });
 }
@@ -57,7 +56,7 @@ export async function tasksFor(projectIds: string[]): Promise<(Task & { projectI
     col: t.stage === 'line' ? t.columnId! : t.stage,
     created: t.createdAt.getTime(), entered: t.enteredColumnAt.getTime(), started: toMs(t.startedAt), deadline: toMs(t.deadlineAt),
     assignees: as.filter(a => a.taskId === t.id).map(a => a.userId), lastTeam: t.lastTeamId,
-    subtasks: subs.filter(x => x.taskId === t.id).map(x => ({ id: x.id, title: x.title, deadline: toMs(x.deadlineAt), done: x.done })),
+    subtasks: subs.filter(x => x.taskId === t.id).map(x => ({ id: x.id, title: x.title, deadline: toMs(x.deadlineAt), done: x.done, assignee: x.assigneeId })),
     hold: t.holdSince ? { since: t.holdSince.getTime(), reason: t.holdReason ?? '' } : null, paused: t.pausedMs,
     commentCount: cm.filter(c => c.taskId === t.id).length, fileCount: at.filter(a => a.taskId === t.id).length,
   }));

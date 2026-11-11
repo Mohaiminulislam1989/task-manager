@@ -7,12 +7,12 @@ import { SWATCHES, isAdminRole, type ProjectShape } from '@/lib/rules';
 import { createProject } from '@/app/actions';
 import { Av, Ic, usePeople, useToast } from './ui';
 
-interface DCol { key: number; name: string; est: number; owners: string[] }
+interface DCol { key: number; name: string; est: number }
 interface DTeam { key: number; name: string; color: string; lead: string; members: string[]; cols: DCol[] }
 interface Draft { name: string; manager: string; teams: DTeam[] }
 let seq = 0;
 const k = () => ++seq;
-const blankTeam = (i: number): DTeam => ({ key: k(), name: '', color: SWATCHES[i % SWATCHES.length], lead: '', members: [], cols: [{ key: k(), name: '', est: 8, owners: [] }] });
+const blankTeam = (i: number): DTeam => ({ key: k(), name: '', color: SWATCHES[i % SWATCHES.length], lead: '', members: [], cols: [{ key: k(), name: '', est: 8 }] });
 const CAMPAIGN: [string, string, [string, number][]][] = [
   ['Client Strategy', '--t1', [['Client brief', 8], ['Strategy & media plan', 16]]],
   ['Creative', '--t2', [['Copywriting', 6], ['Design & video', 12], ['Internal review', 4]]],
@@ -20,10 +20,10 @@ const CAMPAIGN: [string, string, [string, number][]][] = [
 ];
 function template(kind: string, copyFrom: ProjectShape[]): DTeam[] {
   if (kind === 'blank') return [blankTeam(0)];
-  if (kind === 'campaign') return CAMPAIGN.map(([name, color, cols]) => ({ key: k(), name, color, lead: '', members: [], cols: cols.map(([n, est]) => ({ key: k(), name: n, est, owners: [] })) }));
+  if (kind === 'campaign') return CAMPAIGN.map(([name, color, cols]) => ({ key: k(), name, color, lead: '', members: [], cols: cols.map(([n, est]) => ({ key: k(), name: n, est })) }));
   const p = copyFrom.find(x => x.id === kind)!;
   return [...p.teams].sort((a, b) => a.lineOrder - b.lineOrder).map(t => ({ key: k(), name: t.name, color: t.color, lead: t.leadId ?? '', members: [...t.memberIds],
-    cols: p.columns.filter(c => c.teamId === t.id).sort((a, b) => a.position - b.position).map(c => ({ key: k(), name: c.name, est: c.estH, owners: [...c.ownerIds] })) }));
+    cols: p.columns.filter(c => c.teamId === t.id).sort((a, b) => a.position - b.position).map(c => ({ key: k(), name: c.name, est: c.estH })) }));
 }
 
 function issues(d: Draft) {
@@ -38,7 +38,6 @@ function issues(d: Draft) {
     t.cols.forEach((c, j) => {
       if (!c.name.trim()) out.push({ step: 2, text: `${label}: column ${j + 1} needs a name.` });
       if (!(c.est > 0)) out.push({ step: 2, text: `${label}: ${c.name || 'column ' + (j + 1)} needs a time estimate.` });
-      if (!c.owners.length) out.push({ step: 2, text: `${label}: pick who is responsible for ${c.name || 'column ' + (j + 1)}.` });
     });
   });
   return out;
@@ -73,7 +72,7 @@ export function Builder({ me, admin, copyFrom }: { me: string; admin: boolean; c
   const chip = (id: string, on: boolean, onClick: () => void) => <button key={id} type="button" className={`pchip ${on ? 'on' : ''}`} aria-pressed={on} onClick={onClick}><Av id={id} size="sm" />{people[id]?.name}</button>;
   const go = (s: number) => { setStep(s); document.querySelector('.b-body')?.scrollTo(0, 0); };
   const create = () => start(async () => {
-    const r = await createProject({ name: d.name, manager: d.manager, teams: d.teams.map(t => ({ name: t.name, color: t.color, lead: t.lead, members: t.members, cols: t.cols.map(c => ({ name: c.name, est: +c.est, owners: c.owners })) })) });
+    const r = await createProject({ name: d.name, manager: d.manager, teams: d.teams.map(t => ({ name: t.name, color: t.color, lead: t.lead, members: t.members, cols: t.cols.map(c => ({ name: c.name, est: +c.est })) })) });
     if (!r.ok) return toast(r.error);
     toast(`Created "${d.name.trim()}"`); router.push(`/p/${r.id}`); router.refresh();
   });
@@ -98,7 +97,6 @@ export function Builder({ me, admin, copyFrom }: { me: string; admin: boolean; c
 
       {step === 2 && <><LinePreview d={d} /><div className="b-teams">
         {d.teams.map((t, i) => {
-          const crew = [t.lead, ...t.members].filter(Boolean);
           return <section className="b-team" key={t.key} style={{ ['--tc' as string]: `var(${t.color})` }}>
             <div className="bt-head">
               <span className="bt-num">{i + 1}</span>
@@ -114,19 +112,17 @@ export function Builder({ me, admin, copyFrom }: { me: string; admin: boolean; c
               <div className="field"><label htmlFor={`lead-${t.key}`}>Team lead</label><select id={`lead-${t.key}`} value={t.lead} onChange={e => team(i, x => { x.lead = e.target.value; x.members = x.members.filter(m => m !== x.lead); })}><option value="">Choose a lead</option>{everyone.map(p => <option key={p} value={p}>{people[p].name}</option>)}</select></div>
               <div className="field"><span className="flabel">Members</span><div className="pchips">{everyone.filter(p => p !== t.lead).map(p => chip(p, t.members.includes(p), () => team(i, x => {
                 x.members = x.members.includes(p) ? x.members.filter(m => m !== p) : [...x.members, p];
-                if (!x.members.includes(p)) x.cols.forEach(c => { c.owners = c.owners.filter(o => o !== p); });
               })))}</div></div>
             </div>
             <div className="bt-cols">
-              <div className="bc-h"><span /><span>Column</span><span>Time estimate</span><span>Responsible</span><span /></div>
+              <div className="bc-h"><span /><span>Column</span><span>Time estimate</span><span /></div>
               {t.cols.map((c, j) => <div className="bc" key={c.key}>
                 <div className="bc-order"><button type="button" disabled={j === 0} aria-label="Move column up" onClick={() => team(i, x => swap(x.cols, j, -1))}>▲</button><button type="button" disabled={j === t.cols.length - 1} aria-label="Move column down" onClick={() => team(i, x => swap(x.cols, j, 1))}>▼</button></div>
                 <input value={c.name} maxLength={40} placeholder="Column name" aria-label="Column name" onChange={e => team(i, x => { x.cols[j].name = e.target.value; })} />
                 <span className="est-in"><input type="number" min="0.5" step="0.5" value={Number.isNaN(c.est) ? '' : c.est} aria-label="Hours" onChange={e => team(i, x => { x.cols[j].est = parseFloat(e.target.value); })} /><em>hours</em></span>
-                <div className="pchips sm">{crew.length ? crew.map(p => chip(p, c.owners.includes(p), () => team(i, x => { const o = x.cols[j].owners; x.cols[j].owners = o.includes(p) ? o.filter(y => y !== p) : [...o, p]; }))) : <span className="muted">Pick a lead or members first</span>}</div>
                 <button type="button" className="icon-btn" aria-label="Remove column" onClick={() => team(i, x => { x.cols.splice(j, 1); })}><Ic n="x" s={15} /></button>
               </div>)}
-              <button type="button" className="add" onClick={() => team(i, x => { x.cols.push({ key: k(), name: '', est: 8, owners: [] }); })}><Ic n="plus" s={14} />Add column to {t.name || 'this team'}</button>
+              <button type="button" className="add" onClick={() => team(i, x => { x.cols.push({ key: k(), name: '', est: 8 }); })}><Ic n="plus" s={14} />Add column to {t.name || 'this team'}</button>
             </div>
           </section>;
         })}

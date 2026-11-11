@@ -7,7 +7,7 @@ import { db, schema as s } from '../db/index.ts';
 const H = 3600e3, now = Date.now(), t = (h: number) => new Date(now + h * H);
 const PASSWORD = process.env.DEMO_PASSWORD ?? 'demo1234';
 
-await db.execute(sql`truncate organizations, users, projects, teams, team_members, columns, column_owners, tasks, task_assignees, subtasks, stints, comments, attachments, task_events, notifications cascade`);
+await db.execute(sql`truncate organizations, users, projects, teams, team_members, columns, tasks, task_assignees, subtasks, stints, comments, attachments, task_events, notifications cascade`);
 const [org] = await db.insert(s.organizations).values({ name: 'Our Agency' }).returning();
 const hash = await bcrypt.hash(PASSWORD, 10);
 const P: [string, string, number, 'super' | 'head' | 'pm' | null][] = [
@@ -23,7 +23,7 @@ for (const [key, name, hue, orgRole] of P) {
 
 type Sub = [string, number, boolean];
 type T = [string, string, string, number, number, number | null, string[], Sub[]];
-async function project(name: string, teams: [string, string, string, string, string[]][], cols: [string, string, string, number, string[]][], tasks: T[]) {
+async function project(name: string, teams: [string, string, string, string, string[]][], cols: [string, string, string, number][], tasks: T[]) {
   const [p] = await db.insert(s.projects).values({ organizationId: org.id, name, managerId: U.mo }).returning();
   const TM: Record<string, string> = {}, CM: Record<string, string> = {};
   for (const [i, [key, tname, color, lead, members]] of teams.entries()) {
@@ -32,10 +32,9 @@ async function project(name: string, teams: [string, string, string, string, str
     if (members.length) await db.insert(s.teamMembers).values(members.map(m => ({ teamId: tm.id, userId: U[m] })));
   }
   const pos: Record<string, number> = {};
-  for (const [key, team, cname, est, owners] of cols) {
+  for (const [key, team, cname, est] of cols) {
     const [c] = await db.insert(s.columns).values({ teamId: TM[team], name: cname, position: pos[team] = (pos[team] ?? -1) + 1, estimateMinutes: est * 60 }).returning();
     CM[key] = c.id;
-    if (owners.length) await db.insert(s.columnOwners).values(owners.map(o => ({ columnId: c.id, userId: U[o] })));
   }
   const f = [0.7, 1.25, 0.9, 1.1, 0.6, 1.4];
   for (const [i, [title, desc, col, created, entered, deadline, who, subs]] of tasks.entries()) {
@@ -52,7 +51,7 @@ async function project(name: string, teams: [string, string, string, string, str
       lastTeamId: stage === 'done' ? TM[cols.at(-1)![1]] : null, createdBy: U.mo,
     }).returning();
     if (who.length) await db.insert(s.taskAssignees).values(who.map(w => ({ taskId: tk.id, userId: U[w] })));
-    if (subs.length) await db.insert(s.subtasks).values(subs.map(([st, due, done], k) => ({ taskId: tk.id, title: st, deadlineAt: t(due), done, position: k })));
+    if (subs.length) await db.insert(s.subtasks).values(subs.map(([st, due, done], k) => ({ taskId: tk.id, title: st, deadlineAt: t(due), done, position: k, assigneeId: who.length ? U[who[k % who.length]] : null })));
     if (stints.length) await db.insert(s.stints).values(stints.map(x => ({ taskId: tk.id, columnId: x.col, startedAt: new Date(x.start), endedAt: new Date(x.end) })));
     await db.insert(s.taskEvents).values({ taskId: tk.id, userId: null, text: stage === 'todo' ? 'Added to the backlog' : 'Task created', createdAt });
   }
@@ -61,8 +60,8 @@ async function project(name: string, teams: [string, string, string, string, str
 
 await project('Glow & Co: winter skincare launch',
   [['acct', 'Client Strategy', '--t1', 'ayesha', ['tanvir', 'nadia']], ['creative', 'Creative', '--t2', 'karim', ['rafi', 'sumi']], ['perf', 'Media & Performance', '--t3', 'farhan', ['lina', 'joy']]],
-  [['brief', 'acct', 'Client brief', 8, ['tanvir']], ['plan', 'acct', 'Strategy & media plan', 16, ['nadia']], ['copy', 'creative', 'Copywriting', 6, ['rafi']],
-    ['design', 'creative', 'Design & video', 12, ['sumi']], ['review', 'creative', 'Internal review', 4, ['rafi', 'sumi']], ['setup', 'perf', 'Ad setup & tracking', 8, ['lina']], ['approve', 'perf', 'Client approval', 24, ['joy']]],
+  [['brief', 'acct', 'Client brief', 8], ['plan', 'acct', 'Strategy & media plan', 16], ['copy', 'creative', 'Copywriting', 6],
+    ['design', 'creative', 'Design & video', 12], ['review', 'creative', 'Internal review', 4], ['setup', 'perf', 'Ad setup & tracking', 8], ['approve', 'perf', 'Client approval', 24]],
   [
     ['TikTok creator brief', 'Brief for 3 micro-creators: night-cream routine, 30 s vertical.', 'brief', -2, -2, 120, ['tanvir'], [['Shortlist creators', -1, true], ['Draft talking points', 6, false]]],
     ['Q4 media plan and budget split', 'Split the BDT 12 lakh budget across Meta, TikTok and Google. Target ROAS 3.0.', 'plan', -30, -14, 2, ['nadia'], [['Last year benchmarks', -4, true], ['Budget sheet for client', 4, false]]],
@@ -79,7 +78,7 @@ await project('Glow & Co: winter skincare launch',
   ]);
 await project('Riverbank Bistro: website refresh',
   [['ux', 'UX & Content', '--t1', 'ayesha', ['tanvir']], ['web', 'Web Build', '--t3', 'farhan', ['lina']]],
-  [['sitemap', 'ux', 'Sitemap', 8, ['ayesha']], ['wire', 'ux', 'Wireframes & copy', 24, ['tanvir']], ['build', 'web', 'Build', 40, ['lina']]],
+  [['sitemap', 'ux', 'Sitemap', 8], ['wire', 'ux', 'Wireframes & copy', 24], ['build', 'web', 'Build', 40]],
   [
     ['Menu page copy', 'Seasonal menu with prices and allergens.', 'wire', -40, -20, 48, ['tanvir'], []],
     ['Online booking widget', 'Connect the table booking form to the restaurant email.', 'build', -80, -10, 2, ['lina'], [['Test booking emails', -2, false]]],

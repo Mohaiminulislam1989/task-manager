@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { DONE, H, TODO, fmtDate, level, type AnyCol, type Board, type Level } from '@/lib/rules';
 import { InlineName } from './InlineName';
-import { addComment, addSubtask, holdTask, resumeTask, addTaskFiles, renameTask, getTaskDetail, removeFile, removeSubtask, setAssignees, setDeadline, toggleSubtask, updateDetails } from '@/app/actions';
+import { addComment, addSubtask, setSubtaskAssignee, holdTask, resumeTask, addTaskFiles, renameTask, getTaskDetail, removeFile, removeSubtask, setAssignees, setDeadline, toggleSubtask, updateDetails } from '@/app/actions';
 import type { TaskDetail } from '@/lib/data';
 import { Av, Ic, relTime, toLocalInput, usePeople, useToast } from './ui';
 import { AttachButton, Lightbox, PendChips, Thumb, usePending, type FileInfo } from './files';
@@ -32,7 +32,7 @@ export function Drawer({ task: k, b, me, now, mentionItems, onClose, onMove }: {
   const closeBtn = useRef<HTMLButtonElement>(null);
   const [whoEdit, setWhoEdit] = useState<string[] | null>(null);
   const [dlEdit, setDlEdit] = useState<string | null>(null);
-  const [newSub, setNewSub] = useState({ title: '', due: '' });
+  const [newSub, setNewSub] = useState({ title: '', due: '', who: '' });
   const [holdWhy, setHoldWhy] = useState<string | null>(null);
 
   const load = useCallback(() => getTaskDetail(k.id).then(setDetail).catch(() => setDetail(null)), [k.id]);
@@ -50,7 +50,10 @@ export function Drawer({ task: k, b, me, now, mentionItems, onClose, onMove }: {
   const done = k.subtasks.filter(s => s.done).length;
   const targets = ([TODO, ...b.columns, DONE] as AnyCol[]).filter(x => b.moveRule(k, x.id).ok);
   const kindOf = (x: AnyCol) => b.moveRule(k, x.id).kind;
-  const crew = c.teamId ? [t?.leadId, ...(t?.memberIds ?? [])].filter(Boolean) as string[] : [...new Set(b.teams.flatMap(x => [x.leadId, ...x.memberIds]).filter(Boolean) as string[])];
+  // Anyone on the project can be assigned to the task or a subtask; the team holding the card is listed first.
+  const own = t ? [t.leadId, ...t.memberIds].filter(Boolean) as string[] : [];
+  const crew = [...own, ...b.crew.filter(p => !own.includes(p))];
+  const whoOpts = <><option value="">Unassigned</option>{crew.map(p => <option key={p} value={p}>{people[p]?.name}</option>)}</>;
   const manage = canRename && c.id !== 'done';
 
   const run = (fn: () => Promise<{ ok: boolean; msg?: string; error?: string } | { ok: false; error: string }>, after?: () => void) => start(async () => {
@@ -113,10 +116,13 @@ export function Drawer({ task: k, b, me, now, mentionItems, onClose, onMove }: {
                   const late = !s.done && s.deadline != null && s.deadline < now;
                   return <li key={s.id} className={s.done ? 'done' : ''}><input type="checkbox" id={`sub-${s.id}`} checked={s.done} disabled={!editable || pending} onChange={e => run(() => toggleSubtask(s.id, e.target.checked))} />
                     <label htmlFor={`sub-${s.id}`}>{s.title}</label><span>{s.deadline != null && <span className={`due ${late ? 'bad' : ''}`}><Ic n="cal" s={12} />{late ? 'Overdue · ' : ''}{fmtDate(s.deadline, true)}</span>}
+                      {editable ? <select className="sub-who" aria-label={`Who does ${s.title}`} title="Assignee (one person)" value={s.assignee ?? ''} disabled={pending} onChange={e => run(() => setSubtaskAssignee(s.id, e.target.value))}>{whoOpts}</select>
+                        : s.assignee && <span className="sub-who ro"><Av id={s.assignee} size="sm" />{people[s.assignee]?.name}</span>}
                       {canRename && <button type="button" className="icon-btn sm" aria-label={`Remove subtask ${s.title}`} title="Remove subtask" disabled={pending} onClick={() => run(() => removeSubtask(s.id))}><Ic n="x" s={13} /></button>}</span></li>;
                 })}</ul></> : <p className="muted">No subtasks.</p>}
-              {editable && <form className="sub-add" onSubmit={e => { e.preventDefault(); if (!newSub.title.trim()) return; run(() => addSubtask(k.id, newSub.title, newSub.due ? new Date(newSub.due).toISOString() : ''), () => setNewSub({ title: '', due: '' })); }}>
+              {editable && <form className="sub-add" onSubmit={e => { e.preventDefault(); if (!newSub.title.trim()) return; run(() => addSubtask(k.id, newSub.title, newSub.due ? new Date(newSub.due).toISOString() : '', newSub.who), () => setNewSub({ title: '', due: '', who: '' })); }}>
                 <input aria-label="New subtask" placeholder="Add a subtask" maxLength={200} value={newSub.title} onChange={e => setNewSub(x => ({ ...x, title: e.target.value }))} />
+                <select aria-label="Assign the subtask to (optional)" title="Assign to (one person)" value={newSub.who} onChange={e => setNewSub(x => ({ ...x, who: e.target.value }))}><option value="">Assign to…</option>{crew.map(p => <option key={p} value={p}>{people[p]?.name}</option>)}</select>
                 <input type="datetime-local" aria-label="Subtask deadline (optional)" title="Deadline (optional)" value={newSub.due} onChange={e => setNewSub(x => ({ ...x, due: e.target.value }))} />
                 <button className="btn sm" disabled={pending || !newSub.title.trim()}><Ic n="plus" s={13} />Add</button></form>}
             </section>
@@ -178,7 +184,7 @@ export function Drawer({ task: k, b, me, now, mentionItems, onClose, onMove }: {
               {whoEdit == null ? <ul className="people">{k.assignees.length ? k.assignees.map(a => <li key={a}><Av id={a} />{people[a]?.name}</li>) : <li className="muted">Nobody yet</li>}</ul>
                 : <div className="inline-edit"><div className="ownpick">{crew.map(p => <label key={p} className="ownopt"><input type="checkbox" checked={whoEdit.includes(p)} onChange={e => setWhoEdit(x => e.target.checked ? [...x!, p] : x!.filter(y => y !== p))} /><Av id={p} size="sm" />{people[p]?.name}</label>)}</div>
                   <span className="bar-r"><button className="btn sm" onClick={() => setWhoEdit(null)}>Cancel</button><button className="btn primary sm" disabled={pending} onClick={() => run(() => setAssignees(k.id, whoEdit), () => setWhoEdit(null))}>Save</button></span></div>}</div>
-            <div><h3>Details</h3><dl className="kv">{t?.leadId && <><dt>Team lead</dt><dd>{people[t.leadId]?.name}</dd></>}{!special && (c as { ownerIds: string[] }).ownerIds.length > 0 && <><dt>Column owner</dt><dd>{(c as { ownerIds: string[] }).ownerIds.map(o => people[o]?.name).join(', ')}</dd></>}<dt>Created</dt><dd>{fmtDate(k.created, true)}</dd></dl></div>
+            <div><h3>Details</h3><dl className="kv">{t?.leadId && <><dt>Team lead</dt><dd>{people[t.leadId]?.name}</dd></>}<dt>Created</dt><dd>{fmtDate(k.created, true)}</dd></dl></div>
           </aside>
         </div>
       </div>

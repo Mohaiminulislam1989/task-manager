@@ -12,8 +12,9 @@ export type MoveKind = 'handover' | 'back' | 'start' | 'done' | 'reopen' | 'back
 
 export interface Person { id: string; name: string; email: string; hue: number; orgRole: OrgRole }
 export interface Team { id: string; name: string; color: string; lineOrder: number; leadId: string | null; memberIds: string[] }
-export interface Column { id: string; teamId: string; name: string; position: number; estH: number; ownerIds: string[]; archived?: boolean }
-export interface Subtask { id: string; title: string; deadline: number | null; done: boolean }
+export interface Column { id: string; teamId: string; name: string; position: number; estH: number; archived?: boolean }
+// A subtask has at most one assignee; a task can have any number.
+export interface Subtask { id: string; title: string; deadline: number | null; done: boolean; assignee: string | null }
 export interface Task {
   id: string; title: string; desc: string;
   col: string; // a column id, or 'todo' / 'done'
@@ -25,9 +26,9 @@ export interface Task {
 // hours: the organisation's working hours; every clock counts only working time. Missing means calendar time.
 export interface ProjectShape { id: string; name: string; managerId: string; teams: Team[]; columns: Column[]; hours?: WorkHours | null }
 
-export interface LaneCol { id: 'todo' | 'done'; name: string; todo?: true; final?: true; special: true; teamId: null; estH: 0; ownerIds: [] }
-export const TODO: LaneCol = { id: 'todo', name: 'To do', todo: true, special: true, teamId: null, estH: 0, ownerIds: [] };
-export const DONE: LaneCol = { id: 'done', name: 'Done', final: true, special: true, teamId: null, estH: 0, ownerIds: [] };
+export interface LaneCol { id: 'todo' | 'done'; name: string; todo?: true; final?: true; special: true; teamId: null; estH: 0 }
+export const TODO: LaneCol = { id: 'todo', name: 'To do', todo: true, special: true, teamId: null, estH: 0 };
+export const DONE: LaneCol = { id: 'done', name: 'Done', final: true, special: true, teamId: null, estH: 0 };
 export type AnyCol = (Column & { special?: false; todo?: false; final?: false }) | LaneCol;
 
 export interface Role { kind: 'pm' | 'lead' | 'member'; team?: string; admin?: boolean }
@@ -116,17 +117,13 @@ export class Board {
     return { ok: false, why: 'Cards move one team at a time.' };
   }
 
-  // Who works a card after it moves: the destination column's responsible people, if it has any.
-  // Crossing into another team without them keeps only assignees who belong to that team.
-  // To do and Done keep the assignees as they are.
-  assigneesAfterMove(tk: Task, toId: string): string[] {
-    const to = this.col(toId);
-    if (!to || ('special' in to && to.special)) return tk.assignees;
-    if (to.ownerIds.length) return [...to.ownerIds];
-    const fromTeam = this.col(tk.col)?.teamId ?? tk.lastTeam;
-    if (to.teamId === fromTeam) return tk.assignees;
-    const t = this.team(to.teamId), crew = t ? [t.leadId, ...t.memberIds] : [];
-    return tk.assignees.filter(a => crew.includes(a));
+  // People are assigned to tasks and subtasks, not columns, and they stay with the task wherever it moves.
+  // Anyone on the project's teams can be assigned, so a lead can line up the next team's people too.
+  get crew(): string[] { return [...new Set(this.teams.flatMap(t => [t.leadId, ...t.memberIds]).filter(Boolean) as string[])]; }
+  // Whether a card has a team that is working it: true when one of its assignees is on the team holding the card.
+  hasTeamAssignee(tk: Task) {
+    const t = this.team(this.col(tk.col)?.teamId); if (!t) return true;
+    return tk.assignees.some(a => a === t.leadId || t.memberIds.includes(a));
   }
 
   // Working time between two instants, and durations written in working days ("1d" is one working day).
@@ -168,6 +165,8 @@ export function fmtDate(ms: number, short = false) {
   const day = d.toLocaleDateString('en-GB', { weekday: short ? undefined : 'short', day: 'numeric', month: 'short' });
   return `${day}, ${d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
 }
+// Everyone a task involves: its assignees and the assignee of each subtask.
+export const involved = (tk: Pick<Task, 'assignees' | 'subtasks'>) => [...new Set([...tk.assignees, ...tk.subtasks.map(x => x.assignee).filter((x): x is string => !!x)])];
 export const initials = (name: string) => name.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
 
 // Organisation roles a person may hand out.
