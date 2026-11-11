@@ -53,7 +53,7 @@ function Header({ me, projects, notes, unreadCount, canDash, isAdmin, canCreate 
   </>;
 }
 
-const LOOKS = [{ id: 'violet', name: 'Violet' }, { id: 'orbs', name: 'Orbs' }, { id: 'ocean', name: 'Ocean' }, { id: 'sunset', name: 'Sunset' }, { id: 'frost', name: 'Frost' }] as const;
+const LOOKS = [{ id: 'violet', name: 'Violet' }, { id: 'orbs', name: 'Orbs' }, { id: 'ocean', name: 'Ocean' }, { id: 'sunset', name: 'Sunset' }, { id: 'frost', name: 'Frost' }, { id: 'modern', name: 'Modern' }, { id: 'minimal', name: 'Minimalist' }, { id: 'classic', name: 'Classic' }] as const;
 
 /** Theme choice is per device (localStorage); the root layout applies it before first paint. */
 function ThemePicker() {
