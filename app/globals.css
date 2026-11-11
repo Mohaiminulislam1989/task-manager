@@ -2,44 +2,29 @@
 /* Look: Apple-style glass. A soft color wallpaper sits behind translucent, blurred layers (see the Glass layer at the end).
    Layout: app bar, then a page header with tools, then one horizontal production line of team sections; task details slide in from the right */
 :root {
-  --bg: #eef1f7; --surface: #ffffff; --raised: rgba(120,130,155,.11); --ink: #10151d; --ink-2: #353e4a; --muted: #5f6a78; --line: rgba(40,52,74,.14); --line-2: rgba(40,52,74,.08);
-  --accent: #0a6cf0; --accent-ink: #ffffff;
-  --t1: #2a74ec; --t2: #8d4fd8; --t3: #0b9a8f; --t4: #d93f7a; --t5: #e2700f; --t6: #66768a;
-  --ok: #1f9e4a; --warn: #e8a200; --bad: #e0332b;
-  /* glass: wallpaper shows through translucent, blurred layers */
-  --glass: rgba(255,255,255,.30); --glass-2: rgba(255,255,255,.42); --glass-3: rgba(250,251,253,.64); --card: rgba(255,255,255,.46);
-  --sheen: linear-gradient(160deg, rgba(255,255,255,.55), rgba(255,255,255,.10) 38%, rgba(255,255,255,0) 60%);
-  --edge: rgba(255,255,255,.75); --edge-soft: rgba(255,255,255,.5); --glass-line: rgba(30,42,64,.10); --ring: rgba(255,255,255,.95);
-  --blur: saturate(190%) blur(26px); --blur-lg: saturate(200%) blur(48px); --blur-card: saturate(180%) blur(18px);
-  --wall: radial-gradient(1100px 760px at -5% -10%, rgba(80,140,255,.80), transparent 62%), radial-gradient(900px 680px at 105% 0%, rgba(186,120,255,.70), transparent 60%),
-    radial-gradient(700px 520px at 45% 55%, rgba(255,190,120,.40), transparent 65%), radial-gradient(1000px 760px at 75% 110%, rgba(40,210,190,.62), transparent 62%), radial-gradient(760px 600px at 0% 105%, rgba(255,120,175,.58), transparent 60%), #e9eef8;
-  --shadow-1: 0 1px 2px rgba(20,30,55,.06), 0 2px 6px rgba(20,30,55,.05);
-  --shadow-2: 0 8px 24px rgba(20,30,55,.10), 0 1px 3px rgba(20,30,55,.06);
-  --shadow-3: 0 30px 70px rgba(20,30,55,.22), 0 4px 14px rgba(20,30,55,.08);
+  /* Glassmorphism: frosted white glass and white text over a vivid purple-blue gradient. One look for light and dark preference. */
+  --bg: #5b5fd6; --surface: #2a2463; --raised: rgba(255,255,255,.10); --ink: #ffffff; --ink-2: rgba(255,255,255,.88); --muted: rgba(255,255,255,.70); --line: rgba(255,255,255,.24); --line-2: rgba(255,255,255,.13);
+  --accent: #a5d8ff; --accent-ink: #1e1a4d;
+  --t1: #6cb4ff; --t2: #d49bff; --t3: #3fe0c8; --t4: #ff86c0; --t5: #ffab5e; --t6: #cdd5e2;
+  --ok: #4be38a; --warn: #ffd84a; --bad: #ff6b6b;
+  --glass: rgba(255,255,255,.12); --glass-2: rgba(255,255,255,.16); --glass-3: rgba(52,40,120,.62); --card: rgba(255,255,255,.17);
+  --sheen: linear-gradient(160deg, rgba(255,255,255,.22), rgba(255,255,255,.04) 40%, rgba(255,255,255,0) 62%);
+  --edge: rgba(255,255,255,.34); --edge-soft: rgba(255,255,255,.24); --glass-line: rgba(255,255,255,.18); --ring: rgba(255,255,255,.92);
+  --blur: saturate(160%) blur(16px); --blur-lg: saturate(170%) blur(28px); --blur-card: saturate(150%) blur(12px);
+  --wall: radial-gradient(900px 640px at 8% 92%, rgba(255,110,190,.55), transparent 62%), radial-gradient(820px 600px at 96% 6%, rgba(80,210,255,.45), transparent 60%),
+    radial-gradient(700px 520px at 60% 55%, rgba(170,120,255,.35), transparent 65%), linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --shadow-1: 0 2px 8px rgba(25,10,70,.16); --shadow-2: 0 8px 32px rgba(25,10,70,.22); --shadow-3: 0 30px 70px rgba(20,8,60,.40);
   --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI", system-ui, sans-serif;
   --mono: ui-monospace, "SF Mono", "SFMono-Regular", Menlo, "Cascadia Mono", monospace;
+  color-scheme: dark;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --bg: #07090e; --surface: #1b1f28; --raised: rgba(255,255,255,.07); --ink: #eef2f7; --ink-2: #c8d0da; --muted: #95a0ad; --line: rgba(255,255,255,.12); --line-2: rgba(255,255,255,.07);
-  --accent: #3b8bff; --accent-ink: #ffffff; --t1: #5b9dff; --t2: #b789f2; --t3: #3fd0c0; --t4: #f57aa8; --t5: #ffa056; --t6: #9babbd;
-  --ok: #34d063; --warn: #ffd23f; --bad: #ff5a4f;
-  --glass: rgba(22,26,36,.34); --glass-2: rgba(36,41,54,.42); --glass-3: rgba(22,26,35,.72); --card: rgba(46,52,68,.42);
-  --sheen: linear-gradient(160deg, rgba(255,255,255,.14), rgba(255,255,255,.03) 38%, rgba(255,255,255,0) 60%);
-  --edge: rgba(255,255,255,.14); --edge-soft: rgba(255,255,255,.08); --glass-line: rgba(255,255,255,.08); --ring: rgba(20,23,31,.95);
-  --wall: radial-gradient(1100px 760px at -5% -10%, rgba(40,100,255,.62), transparent 62%), radial-gradient(900px 680px at 105% 0%, rgba(140,60,230,.55), transparent 60%),
-    radial-gradient(700px 520px at 45% 55%, rgba(230,120,40,.18), transparent 65%), radial-gradient(1000px 760px at 75% 110%, rgba(0,170,155,.45), transparent 62%), radial-gradient(760px 600px at 0% 105%, rgba(220,40,120,.40), transparent 60%), #06080d;
-  --shadow-1: 0 1px 2px rgba(0,0,0,.35), 0 2px 6px rgba(0,0,0,.25); --shadow-2: 0 8px 24px rgba(0,0,0,.45); --shadow-3: 0 30px 70px rgba(0,0,0,.65); color-scheme: dark
+  --wall: radial-gradient(900px 640px at 8% 92%, rgba(220,70,160,.45), transparent 62%), radial-gradient(820px 600px at 96% 6%, rgba(40,160,230,.38), transparent 60%),
+    radial-gradient(700px 520px at 60% 55%, rgba(130,80,230,.30), transparent 65%), linear-gradient(135deg, #3f4bb8 0%, #4e2a78 100%);
 } }
 :root[data-theme="dark"] {
-  --bg: #07090e; --surface: #1b1f28; --raised: rgba(255,255,255,.07); --ink: #eef2f7; --ink-2: #c8d0da; --muted: #95a0ad; --line: rgba(255,255,255,.12); --line-2: rgba(255,255,255,.07);
-  --accent: #3b8bff; --accent-ink: #ffffff; --t1: #5b9dff; --t2: #b789f2; --t3: #3fd0c0; --t4: #f57aa8; --t5: #ffa056; --t6: #9babbd;
-  --ok: #34d063; --warn: #ffd23f; --bad: #ff5a4f;
-  --glass: rgba(22,26,36,.34); --glass-2: rgba(36,41,54,.42); --glass-3: rgba(22,26,35,.72); --card: rgba(46,52,68,.42);
-  --sheen: linear-gradient(160deg, rgba(255,255,255,.14), rgba(255,255,255,.03) 38%, rgba(255,255,255,0) 60%);
-  --edge: rgba(255,255,255,.14); --edge-soft: rgba(255,255,255,.08); --glass-line: rgba(255,255,255,.08); --ring: rgba(20,23,31,.95);
-  --wall: radial-gradient(1100px 760px at -5% -10%, rgba(40,100,255,.62), transparent 62%), radial-gradient(900px 680px at 105% 0%, rgba(140,60,230,.55), transparent 60%),
-    radial-gradient(700px 520px at 45% 55%, rgba(230,120,40,.18), transparent 65%), radial-gradient(1000px 760px at 75% 110%, rgba(0,170,155,.45), transparent 62%), radial-gradient(760px 600px at 0% 105%, rgba(220,40,120,.40), transparent 60%), #06080d;
-  --shadow-1: 0 1px 2px rgba(0,0,0,.35), 0 2px 6px rgba(0,0,0,.25); --shadow-2: 0 8px 24px rgba(0,0,0,.45); --shadow-3: 0 30px 70px rgba(0,0,0,.65); color-scheme: dark
+  --wall: radial-gradient(900px 640px at 8% 92%, rgba(220,70,160,.45), transparent 62%), radial-gradient(820px 600px at 96% 6%, rgba(40,160,230,.38), transparent 60%),
+    radial-gradient(700px 520px at 60% 55%, rgba(130,80,230,.30), transparent 65%), linear-gradient(135deg, #3f4bb8 0%, #4e2a78 100%);
 }
 
 * { box-sizing: border-box }
@@ -818,13 +803,22 @@ fieldset.field legend { font-size: 12.5px; font-weight: 600; color: var(--ink-2)
 
 /* no blur support, or the user asked for less transparency: fall back to solid surfaces */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  :root { --glass: rgba(248,249,252,.96); --glass-2: #ffffff; --glass-3: #ffffff; --card: #ffffff }
+  :root { --glass: rgba(70,62,160,.92); --glass-2: rgba(84,74,178,.94); --glass-3: #3a3090; --card: rgba(96,86,190,.95) }
 }
 @media (prefers-reduced-transparency: reduce) {
-  :root { --glass: #f6f7fa; --glass-2: #ffffff; --glass-3: #ffffff; --card: #ffffff; --wall: #eef1f7 }
-  :root[data-theme="dark"] { --glass: #161a22; --glass-2: #1d222c; --glass-3: #1d222c; --card: #242a35; --wall: #07090e }
+  :root, :root[data-theme="dark"] { --glass: #4a42a8; --glass-2: #554cb6; --glass-3: #3a3090; --card: #5f56c2; --wall: linear-gradient(135deg, #5a63c8, #634190) }
 }
-@media (prefers-reduced-transparency: reduce) and (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --glass: #161a22; --glass-2: #1d222c; --glass-3: #1d222c; --card: #242a35; --wall: #07090e } }
+/* native controls on the dark glass */
+option, optgroup { color: #1e1a4d; background: #fff }
+::placeholder { color: rgba(255,255,255,.55) }
+.btn.primary, .mv.handover { background: linear-gradient(180deg, #ffffff, #e8e6ff); color: #2a2463; border-color: transparent; box-shadow: inset 0 1px 0 #fff, 0 6px 18px rgba(25,10,70,.28) }
+.btn.primary:hover { filter: brightness(1.03) }
+.mv.handover .k { color: #4a4380 }
+.seg button.on, .seg.layout button.on, .views button.on, .views a.on { background: rgba(255,255,255,.92); color: #2a2463; box-shadow: 0 2px 8px rgba(25,10,70,.22) }
+.fchip.on { background: #fff; color: #2a2463; border-color: #fff } .fchip.on span { background: rgba(42,36,99,.12); color: #2a2463 }
+.toast { background: rgba(30,22,80,.78) }
+.page h1, .pane-head h1, .d-title h2, .team-head h2, .auth-card h1 { text-shadow: 0 1px 3px rgba(20,8,60,.28) }
+.card h4 { font-weight: 650 }
 
 /* ==== Glass, round 2: thinner glass, light sheen, floating cards ====
    Deadline status moved from the card background to a soft colored shadow (owner's call, 2026-11-10):
@@ -870,3 +864,24 @@ fieldset.field legend { font-size: 12.5px; font-weight: 600; color: var(--ink-2)
 .hold-box p { margin: 0; font-size: 12.5px } .hold-why { font-size: 13.5px !important; font-weight: 500 }
 .hold-box textarea { border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; background: var(--surface); font: inherit; font-size: 13px; resize: vertical }
 .hold-box > .btn { align-self: flex-start } .hold-btn { width: 100% }
+
+/* ==== Glassmorphism readability: on the purple gradient, red/green/yellow text alone is too faint,
+   so status text sits on a small tinted chip, and labels whose meaning is carried by a stripe stay white. */
+.c-meta .m.bad, .timer.t-bad, .tbl td.hot, .tbl small.hot, .lc.time.t-bad, .lc.ldue.d-bad > span, .due.bad {
+  color: #fff; background: color-mix(in srgb, var(--bad) 62%, transparent); border-radius: 6px; padding: 0 6px; font-weight: 600 }
+.tbl td.hot { background: none } .tbl td.hot::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--bad); margin-right: 6px; vertical-align: middle }
+.timer.t-warn, .lc.time.t-warn { color: #fff; background: color-mix(in srgb, var(--warn) 45%, transparent); border-radius: 6px; padding: 0 6px }
+.timer { margin-right: 22px }
+.tile .tl, .st-overdue-tile .tl, .st-risk-tile .tl, .st-ontime-tile .tl { color: #fff }
+.tile::before { width: 5px }
+.team-tag { color: #fff; background: color-mix(in srgb, var(--tc) 48%, transparent); box-shadow: inset 0 0 0 1px rgba(255,255,255,.25) }
+.mv.back { color: #fff; border-color: color-mix(in srgb, var(--bad) 70%, transparent); background: color-mix(in srgb, var(--bad) 22%, transparent) }
+.mv.donebtn { color: #fff; border-color: color-mix(in srgb, var(--ok) 70%, transparent); background: color-mix(in srgb, var(--ok) 20%, transparent) }
+.pill.p-bad { color: #fff; background: color-mix(in srgb, var(--bad) 45%, transparent); border-color: color-mix(in srgb, var(--bad) 70%, transparent) }
+.pill.p-warn { background: color-mix(in srgb, var(--warn) 30%, transparent); border-color: color-mix(in srgb, var(--warn) 65%, transparent) }
+.pill.p-ok { background: color-mix(in srgb, var(--ok) 22%, transparent); border-color: color-mix(in srgb, var(--ok) 60%, transparent) }
+.st-overdue-t { color: #fff; background: color-mix(in srgb, var(--bad) 55%, transparent) } .st-risk-t { color: #2a2463; background: var(--warn) } .st-ontime-t { color: #fff; background: color-mix(in srgb, var(--ok) 45%, transparent) }
+.stint .tag.bad { color: #fff; background: color-mix(in srgb, var(--bad) 55%, transparent) } .stint .tag.ok { color: #fff; background: color-mix(in srgb, var(--ok) 40%, transparent) } .stint .tag.warn { color: #2a2463; background: var(--warn) }
+.form-error { color: #fff; background: color-mix(in srgb, var(--bad) 55%, transparent); padding: 6px 10px; border-radius: 8px }
+.lane-done .lane-ic { color: var(--ok) }
+.link { color: #d6ecff }
