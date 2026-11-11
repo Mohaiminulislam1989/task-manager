@@ -96,13 +96,12 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .col { width: 268px; min-height: 0; display: flex; flex-direction: column; gap: 6px; border-radius: 10px; padding: 4px; transition: background .12s, box-shadow .12s }
 .col.drop-ok { background: color-mix(in srgb, var(--tc) 12%, transparent); box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--tc) 55%, transparent) }
 .col-body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 8px; padding: 2px 3px 8px; scrollbar-width: thin }
-.col-head, .owners, .add { flex: none }
+.col-head, .add { flex: none }
 .col-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 4px 6px 6px }
 .col-name { display: flex; align-items: center; gap: 8px; min-width: 0 }
 .col-name h3 { margin: 0; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
 .n-badge { font-size: 11px; font-weight: 600; color: var(--muted); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 0 7px; font-variant-numeric: tabular-nums }
 .est { display: inline-flex; align-items: center; gap: 4px; font-family: var(--mono); font-size: 11px; color: var(--muted); white-space: nowrap }
-.owners { display: flex; align-items: center; gap: 6px; padding: 0 6px 4px; font-size: 11.5px; color: var(--muted) }
 .empty-col { border: 1px dashed var(--line); border-radius: 8px; padding: 18px 10px; text-align: center; color: var(--muted); font-size: 12px }
 .add { display: flex; align-items: center; justify-content: center; gap: 6px; border-radius: 8px; padding: 7px; font-size: 12.5px; color: var(--muted); font-weight: 500 }
 .add:hover { background: var(--surface); color: var(--ink); box-shadow: var(--shadow-1) }
@@ -344,7 +343,7 @@ dialog::backdrop { background: rgba(10,14,20,.45) }
 .addp input { width: 120px; border: 1px dashed var(--line); border-radius: 999px; padding: 4px 10px; font-size: 12.5px; background: transparent }
 .addp .btn { padding: 4px 8px; border-radius: 999px; font-size: 12px }
 .bt-cols { padding: 4px 14px 14px; display: flex; flex-direction: column; gap: 6px }
-.bc-h, .bc { display: grid; grid-template-columns: 26px minmax(140px, 1.2fr) 120px minmax(0, 2fr) 34px; gap: 10px; align-items: center }
+.bc-h, .bc { display: grid; grid-template-columns: 26px minmax(140px, 1fr) 120px 34px; gap: 10px; align-items: center }
 .bc-h { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; padding: 4px 0 }
 .bc { padding: 6px 0; border-top: 1px solid var(--line-2) }
 .bc > input, .est-in input { border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; background: var(--surface); width: 100%; min-width: 0 }
@@ -373,8 +372,8 @@ dialog::backdrop { background: rgba(10,14,20,.45) }
 @media (max-width: 760px) {
   .bt-people { grid-template-columns: 1fr }
   .bc-h { display: none }
-  .bc { grid-template-columns: 26px minmax(0, 1fr) 34px; grid-template-areas: "o n x" "o e x" "o w w" }
-  .bc-order { grid-area: o } .bc > input { grid-area: n } .est-in { grid-area: e } .bc .pchips { grid-area: w } .bc > .icon-btn { grid-area: x }
+  .bc { grid-template-columns: 26px minmax(0, 1fr) 34px; grid-template-areas: "o n x" "o e x" }
+  .bc-order { grid-area: o } .bc > input { grid-area: n } .est-in { grid-area: e } .bc > .icon-btn { grid-area: x }
   .stepper button { font-size: 0; gap: 0 } .stepper span { font-size: 11.5px }
 }
 
@@ -692,8 +691,14 @@ fieldset.field legend { font-size: 12.5px; font-weight: 600; color: var(--ink-2)
 
 /* Editing a task after creation: subtasks, deadline, assignees */
 .sub-add { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap }
-.sub-add input { flex: 1 1 160px; min-width: 0; border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; background: var(--surface); font: inherit; font-size: 13px }
+.sub-add input, .sub-add select { flex: 1 1 160px; min-width: 0; border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; background: var(--surface); font: inherit; font-size: 13px }
 .sub-add input[type=datetime-local] { flex: 0 1 190px }
+.sub-add select { flex: 0 1 170px; min-width: 0 }
+/* One person per subtask, picked right in its row */
+.sub-who { width: 120px; border: 1px solid var(--line); border-radius: 999px; padding: 3px 8px; background: var(--surface); font: inherit; font-size: 12px; color: var(--ink) }
+.sub-who.ro { width: auto; display: inline-flex; align-items: center; gap: 5px; border-color: transparent; background: none; color: var(--muted) }
+select.sub-who:has(option[value=""]:checked) { color: var(--muted) }
+@media (max-width: 560px) { .subs li { grid-template-columns: 20px minmax(0, 1fr); } .subs li > span:last-child { grid-column: 2; flex-wrap: wrap } }
 .inline-edit { display: flex; flex-direction: column; gap: 8px; margin-top: 6px }
 .inline-edit > input { border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; background: var(--surface); font: inherit; font-size: 13px }
 .inline-edit .bar-r { display: flex; gap: 6px; justify-content: flex-end }
@@ -775,7 +780,7 @@ fieldset.field legend { font-size: 12.5px; font-weight: 600; color: var(--ink-2)
 .search:focus-within { background: var(--card); border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent) }
 .me { background: var(--glass-2); border-color: var(--edge-soft); box-shadow: inset 0 1px 0 var(--edge) }
 .proj select:hover { background: var(--raised); border-color: var(--glass-line) }
-.field input, .field textarea, .field select, .sel, .filters select, .tbl select, .bc > input, .est-in input, .b-final input[data-b], .lmove, .inline-name, .sub-add input, .inline-edit > input {
+.field input, .field textarea, .field select, .sel, .filters select, .tbl select, .bc > input, .est-in input, .b-final input[data-b], .lmove, .inline-name, .sub-add input, .sub-add select, .inline-edit > input {
   background: var(--card); border-color: var(--glass-line); border-radius: 10px }
 .inline-name { border-color: var(--accent) }
 .pill, .ro, .kind, .due, .tabs .n, .ptabs button span, .fchip span, .upchip, .stint .tag, .st-done-t, .orgtag { background: var(--raised); border-color: var(--glass-line) }

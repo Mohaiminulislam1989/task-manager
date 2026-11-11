@@ -65,11 +65,6 @@ export const columns = pgTable('columns', {
   archivedAt: at('archived_at'),
 });
 
-export const columnOwners = pgTable('column_owners', {
-  columnId: uuid('column_id').notNull().references(() => columns.id, { onDelete: 'cascade' }),
-  userId: uuid('user_id').notNull().references(() => users.id),
-}, t => [primaryKey({ columns: [t.columnId, t.userId] })]);
-
 export const tasks = pgTable('tasks', {
   id: id(),
   projectId: uuid('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
@@ -91,6 +86,8 @@ export const tasks = pgTable('tasks', {
   createdBy: uuid('created_by').notNull().references(() => users.id),
 }, t => [index('tasks_project_idx').on(t.projectId)]);
 
+// People are assigned to tasks (any number) and subtasks (at most one), never to columns.
+// Assignees stay with the task as it moves along the line.
 export const taskAssignees = pgTable('task_assignees', {
   taskId: uuid('task_id').notNull().references(() => tasks.id, { onDelete: 'cascade' }),
   userId: uuid('user_id').notNull().references(() => users.id),
@@ -102,6 +99,7 @@ export const subtasks = pgTable('subtasks', {
   title: text('title').notNull(),
   deadlineAt: at('deadline_at'),
   done: boolean('done').notNull().default(false),
+  assigneeId: uuid('assignee_id').references(() => users.id),
   position: integer('position').notNull().default(0),
 });
 

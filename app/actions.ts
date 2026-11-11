@@ -75,9 +75,18 @@ async function loadTask(taskId: string) {
 
 const teamPeople = (b: Board, tid: string | null) => { const t = b.team(tid); return t ? [t.leadId, ...t.memberIds].filter(Boolean) as string[] : []; };
 
-// Fan out an in-app notification: the given teams, plus the project manager, never the actor.
+// Everyone assigned to a task or one of its subtasks, read fresh so it reflects the change just made.
+async function taskPeople(taskId: string) {
+  const [as, subs] = await Promise.all([
+    db.select({ id: s.taskAssignees.userId }).from(s.taskAssignees).where(eq(s.taskAssignees.taskId, taskId)),
+    db.select({ id: s.subtasks.assigneeId }).from(s.subtasks).where(eq(s.subtasks.taskId, taskId)),
+  ]);
+  return [...as, ...subs].map(x => x.id).filter((x): x is string => !!x);
+}
+
+// Fan out an in-app notification: the given teams, the task's assignees (task and subtasks) and the project manager, never the actor.
 async function notify(b: Board, v: Viewer, opts: { teams: (string | null)[]; kind: 'update' | 'move' | 'comment' | 'back'; text: string; taskId: string | null }) {
-  const to = new Set<string>([b.p.managerId, ...opts.teams.flatMap(t => teamPeople(b, t))]);
+  const to = new Set<string>([b.p.managerId, ...opts.teams.flatMap(t => teamPeople(b, t)), ...(opts.taskId ? await taskPeople(opts.taskId) : [])]);
   to.delete(v.id);
   if (to.size) await db.insert(s.notifications).values([...to].map(userId => ({ userId, projectId: b.p.id, taskId: opts.taskId, byId: v.id, kind: opts.kind, text: opts.text })));
 }
@@ -155,11 +164,9 @@ export async function moveTask(form: FormData): Promise<Result> {
     const from = b.col(tk.col)!, to = b.col(toId)!, now = new Date();
     const fromTeam = from.teamId, toTeam = to.teamId;
     const spent = b.work(tk.entered, now.getTime());
-    const nextAssignees = b.assigneesAfterMove(tk, toId);
     // Moving a card that is on hold resumes it first: the hold's working time pushes the deadline back.
     const held = tk.hold ? b.work(tk.hold.since, now.getTime()) : 0;
     if (held && deadline && !rule.needsDeadline) deadline = addWork(b.p.hours, deadline, held);
-    const same = nextAssignees.length === tk.assignees.length && nextAssignees.every(a => tk.assignees.includes(a));
     // Lock the row and check nobody moved it since this person loaded the board.
     const moved = await db.transaction(async tx => {
       const [cur] = await tx.select({ stage: s.tasks.stage, columnId: s.tasks.columnId, entered: s.tasks.enteredColumnAt }).from(s.tasks).where(eq(s.tasks.id, tk.id)).for('update');
@@ -174,10 +181,6 @@ export async function moveTask(form: FormData): Promise<Result> {
         ...(fromTeam ? { lastTeamId: fromTeam } : {}),
         ...(tk.col === 'todo' ? { startedAt: now } : {}),
       }).where(eq(s.tasks.id, tk.id));
-      if (!same) {
-        await tx.delete(s.taskAssignees).where(eq(s.taskAssignees.taskId, tk.id));
-        if (nextAssignees.length) await tx.insert(s.taskAssignees).values(nextAssignees.map(userId => ({ taskId: tk.id, userId })));
-      }
       return true;
     });
     if (!moved) { await touch(b.p.id); return fail(STALE); }
@@ -193,7 +196,12 @@ export async function moveTask(form: FormData): Promise<Result> {
     await log(tk.id, v.id, note ? `${text}. Reason: "${note}"` : text);
     if (tk.hold) await log(tk.id, v.id, `Resumed from hold after ${b.fmt(held)}${held && tk.deadline && !rule.needsDeadline ? ', deadline pushed back by the same' : ''}`);
     if (rule.needsDeadline) await log(tk.id, v.id, `Set the deadline`);
-    if (!same) await log(tk.id, v.id, nextAssignees.length ? `Assigned to ${await names(v.organizationId, nextAssignees)} for ${to.name}` : 'Unassigned: nobody on this team was working it');
+    // Assignees stay with the task. When it reaches a team none of them are on, its lead is told to add someone.
+    const unstaffed = toTeam !== fromTeam && toTeam != null && !b.hasTeamAssignee({ ...tk, col: toId });
+    if (unstaffed) {
+      await log(tk.id, v.id, `Nobody on ${tName(toTeam)} is assigned yet`);
+      await notifyUsers(v, [b.team(toTeam)?.leadId], { projectId: b.p.id, taskId: tk.id, text: `"${tk.title}" reached ${tName(toTeam)} (${to.name}) and nobody on your team is assigned to it yet` });
+    }
     if (note) {
       const [c] = await db.insert(s.comments).values({ taskId: tk.id, userId: v.id, kind: rule.kind === 'back' ? 'back' : rule.kind === 'done' ? 'done' : 'backlog', body: note }).returning();
       await saveFiles(form, 'files', tk.id, v.id, c.id);
@@ -202,7 +210,8 @@ export async function moveTask(form: FormData): Promise<Result> {
     const what = rule.kind === 'done' ? `marked "${tk.title}" done` : rule.kind === 'start' ? `started "${tk.title}" in ${to.name}` : rule.kind === 'handover' ? `handed "${tk.title}" to ${tName(toTeam)}`
       : rule.kind === 'back' ? `sent "${tk.title}" back to ${to.name}` : `moved "${tk.title}" to ${to.name}`;
     await notify(b, v, { teams: [fromTeam ?? tk.lastTeam, toTeam], kind: rule.kind === 'back' ? 'back' : 'move', text: `${v.name} ${what}${note ? ': ' + note : ''}`, taskId: tk.id });
-    return done(b.p.id, rule.kind === 'done' ? 'Marked done' : rule.kind === 'handover' ? `Handed to ${tName(toTeam)}` : rule.kind === 'back' ? `Sent back to ${tName(toTeam)}` : `Moved to ${to.name}`);
+    const msg = rule.kind === 'done' ? 'Marked done' : rule.kind === 'handover' ? `Handed to ${tName(toTeam)}` : rule.kind === 'back' ? `Sent back to ${tName(toTeam)}` : `Moved to ${to.name}`;
+    return done(b.p.id, unstaffed ? `${msg}. Nobody on ${tName(toTeam)} is assigned yet` : msg);
   });
 }
 
@@ -219,14 +228,14 @@ export async function createTask(form: FormData): Promise<Result> {
     if (!title) return fail('Add a title.');
     const dl = Date.parse(String(form.get('deadline') ?? ''));
     if (!backlog && !(dl > Date.now())) return fail('Set a deadline in the future.');
-    const who = String(form.get('assignee') ?? '');
-    if (who && !(backlog ? b.teams.flatMap(t => teamPeople(b, t.id)) : teamPeople(b, c.teamId)).includes(who)) return fail('The assignee must be on this team.');
+    const who = [...new Set(form.getAll('assignee').map(String).filter(Boolean))];
+    if (who.some(id => !b.crew.includes(id))) return fail('Assignees must be on one of this project’s teams.');
     const now = new Date();
     const [tk] = await db.insert(s.tasks).values({
       projectId, stage: backlog ? 'todo' : 'line', columnId: backlog ? null : colId, title, description: String(form.get('desc') ?? '').trim(),
       deadlineAt: dl > 0 ? new Date(dl) : null, startedAt: backlog ? null : now, enteredColumnAt: now, createdBy: v.id,
     }).returning();
-    if (who) await db.insert(s.taskAssignees).values({ taskId: tk.id, userId: who });
+    if (who.length) await db.insert(s.taskAssignees).values(who.map(userId => ({ taskId: tk.id, userId })));
     const subs = String(form.get('subtasks') ?? '').split('\n').map(x => x.trim()).filter(Boolean);
     if (subs.length) {
       const span = (dl > 0 ? dl : now.getTime() + 7 * 864e5) - now.getTime();
@@ -234,7 +243,7 @@ export async function createTask(form: FormData): Promise<Result> {
     }
     await saveFiles(form, 'files', tk.id, v.id);
     await log(tk.id, v.id, backlog ? 'Added to the backlog' : `Created in ${c.name}`);
-    await notify(b, v, { teams: [c.teamId], kind: 'update', text: `${v.name} added "${title}" to ${c.name}`, taskId: tk.id });
+    await notify(b, v, { teams: [c.teamId], kind: 'update', text: `${v.name} added "${title}" to ${c.name}${who.length ? ` and assigned ${await names(v.organizationId, who)}` : ''}`, taskId: tk.id });
     if (tk.description) await notifyMentions(b, v, tk, tk.description, 'the task details');
     return done(projectId, `Added "${title}"`);
   });
@@ -327,15 +336,15 @@ export async function toggleSubtask(subId: string, value: boolean): Promise<Resu
 
 // ---------- editing a task after it is created ----------
 // Assignees, the overall deadline and removing subtasks: the lead of the team holding the card, or PM and above.
-// Adding subtasks: anyone who can work the card, so members can break down their own work.
-const taskCrew = (b: Board, tk: Task) => { const tid = b.col(tk.col)?.teamId ?? null; return tid ? teamPeople(b, tid) : [...new Set(b.teams.flatMap(t => teamPeople(b, t.id)))]; };
+// Adding subtasks and choosing who does each one: anyone who can work the card, so members can break down their own work.
+// Assignees can be anyone on the project's teams, and they stay with the task as it moves.
 
 export async function setAssignees(taskId: string, ids: string[]): Promise<Result> {
   return guard(async () => {
     const { v, board: b, tk } = await loadTask(taskId);
     if (!b.canRenameTask(tk)) return fail('Only the team lead or the project manager can change who is on this task.');
-    const crew = taskCrew(b, tk), next = [...new Set(ids)];
-    if (next.some(id => !crew.includes(id))) return fail('Assignees must be on the team that holds this card.');
+    const next = [...new Set(ids)];
+    if (next.some(id => !b.crew.includes(id))) return fail('Assignees must be on one of this project’s teams.');
     if (next.length === tk.assignees.length && next.every(a => tk.assignees.includes(a))) return { ok: true, msg: 'Saved' };
     await db.transaction(async tx => {
       await tx.delete(s.taskAssignees).where(eq(s.taskAssignees.taskId, tk.id));
@@ -365,7 +374,7 @@ export async function setDeadline(taskId: string, iso: string): Promise<Result> 
   });
 }
 
-export async function addSubtask(taskId: string, title: string, deadlineIso: string): Promise<Result> {
+export async function addSubtask(taskId: string, title: string, deadlineIso: string, assignee = ''): Promise<Result> {
   return guard(async () => {
     const { v, board: b, tk } = await loadTask(taskId);
     if (!canEditTask(b, tk)) return fail('You can only add subtasks to tasks in your own team.');
@@ -373,10 +382,31 @@ export async function addSubtask(taskId: string, title: string, deadlineIso: str
     if (!t) return fail('Name the subtask.');
     const d = deadlineIso ? Date.parse(deadlineIso) : NaN;
     if (deadlineIso && !(d > 0)) return fail('Pick a valid date for the subtask.');
-    await db.insert(s.subtasks).values({ taskId: tk.id, title: t, position: tk.subtasks.length, deadlineAt: d > 0 ? new Date(d) : null });
-    await log(tk.id, v.id, `Added subtask "${t}"`);
-    await notify(b, v, { teams: [b.cardTeam(tk)], kind: 'update', text: `${v.name} added the subtask "${t}" to "${tk.title}"`, taskId: tk.id });
+    if (assignee && !b.crew.includes(assignee)) return fail('The subtask’s assignee must be on one of this project’s teams.');
+    await db.insert(s.subtasks).values({ taskId: tk.id, title: t, position: tk.subtasks.length, deadlineAt: d > 0 ? new Date(d) : null, assigneeId: assignee || null });
+    const forWho = assignee ? ` for ${await names(v.organizationId, [assignee])}` : '';
+    await log(tk.id, v.id, `Added subtask "${t}"${forWho}`);
+    await notify(b, v, { teams: [b.cardTeam(tk)], kind: 'update', text: `${v.name} added the subtask "${t}"${forWho} to "${tk.title}"`, taskId: tk.id });
     return done(b.p.id, 'Subtask added');
+  });
+}
+
+// A subtask has one assignee at most; '' clears it.
+export async function setSubtaskAssignee(subId: string, userId: string): Promise<Result> {
+  return guard(async () => {
+    const [st] = await db.select().from(s.subtasks).where(eq(s.subtasks.id, subId));
+    if (!st) return fail('That subtask no longer exists.');
+    const { v, board: b, tk } = await loadTask(st.taskId);
+    if (!canEditTask(b, tk)) return fail('You can only assign subtasks on tasks in your own team.');
+    if (userId && !b.crew.includes(userId)) return fail('The subtask’s assignee must be on one of this project’s teams.');
+    if ((userId || null) === st.assigneeId) return { ok: true, msg: 'Saved' };
+    await db.update(s.subtasks).set({ assigneeId: userId || null }).where(eq(s.subtasks.id, subId));
+    const who = userId ? await names(v.organizationId, [userId]) : '';
+    await log(tk.id, v.id, userId ? `Assigned subtask "${st.title}" to ${who}` : `Unassigned subtask "${st.title}"`);
+    // notify() reaches the new assignee through the task's people; the previous one is told separately.
+    await notify(b, v, { teams: [b.cardTeam(tk)], kind: 'update', text: userId ? `${v.name} assigned the subtask "${st.title}" on "${tk.title}" to ${who}` : `${v.name} unassigned the subtask "${st.title}" on "${tk.title}"`, taskId: tk.id });
+    if (st.assigneeId && st.assigneeId !== userId) await notifyUsers(v, [st.assigneeId], { projectId: b.p.id, taskId: tk.id, text: `${v.name} took you off the subtask "${st.title}" on "${tk.title}"` });
+    return done(b.p.id, userId ? `Subtask assigned to ${who}` : 'Subtask unassigned');
   });
 }
 
@@ -453,10 +483,8 @@ export async function addColumn(form: FormData): Promise<Result> {
     const at = pos === 'start' ? 0 : cols.findIndex(c => c.id === pos) + 1;
     const ordered: (Column | null)[] = [...cols]; ordered.splice(at, 0, null);
     await db.transaction(async tx => {
-      const [c] = await tx.insert(s.columns).values({ teamId, name, position: at, estimateMinutes: Math.round(est * 60) }).returning();
+      await tx.insert(s.columns).values({ teamId, name, position: at, estimateMinutes: Math.round(est * 60) });
       for (const [i, x] of ordered.entries()) if (x) await tx.update(s.columns).set({ position: i }).where(eq(s.columns.id, x.id));
-      const owners = form.getAll('owners').map(String).filter(o => teamPeople(b, teamId).includes(o));
-      if (owners.length) await tx.insert(s.columnOwners).values(owners.map(userId => ({ columnId: c.id, userId })));
     });
     await notify(b, v, { teams: [teamId], kind: 'update', text: `${v.name} added the column "${name}" to ${t.name}`, taskId: null });
     return done(t.projectId, `Added ${name} to ${t.name}`);
@@ -654,17 +682,17 @@ export async function setProjectManager(projectId: string, userId: string): Prom
 }
 
 // ---------- project builder ----------
-export interface DraftTeam { name: string; color: string; lead: string; members: string[]; cols: { name: string; est: number; owners: string[] }[] }
+export interface DraftTeam { name: string; color: string; lead: string; members: string[]; cols: { name: string; est: number }[] }
 export async function createProject(draft: { name: string; manager?: string; teams: DraftTeam[] }): Promise<Result & { id?: string }> {
   try {
     const v = await requireUser();
     if (!(isAdminRole(v.orgRole ?? null) || v.orgRole === 'pm')) return fail('Only project managers and admins can create projects.');
     if (!draft.name.trim()) return fail('Name the project.');
     if (!draft.teams.length || draft.teams.some(t => !t.name.trim() || !t.lead || !t.cols.length || t.cols.some(c => !c.name.trim() || !(c.est > 0)))) return fail('Every team needs a name, a lead and named columns with estimates.');
-    const used = [...new Set(draft.teams.flatMap(t => [t.lead, ...t.members, ...t.cols.flatMap(c => c.owners)]))];
+    const used = [...new Set(draft.teams.flatMap(t => [t.lead, ...t.members]))];
     const known = await db.select({ id: s.users.id }).from(s.users).where(and(eq(s.users.organizationId, v.organizationId), inArray(s.users.id, used)));
     if (known.length !== used.length) return fail('Some people in this project are not in your organisation.');
-    if (draft.teams.some(t => !SWATCHES.includes(t.color) || t.cols.some(c => c.owners.some(o => o !== t.lead && !t.members.includes(o))))) return fail('Column owners must be on that team.');
+    if (draft.teams.some(t => !SWATCHES.includes(t.color))) return fail('Pick a colour for every team.');
     let managerId = v.id;
     if (isAdminRole(v.orgRole ?? null) && draft.manager) {
       const [m] = await db.select().from(s.users).where(and(eq(s.users.id, draft.manager), eq(s.users.organizationId, v.organizationId)));
@@ -678,8 +706,7 @@ export async function createProject(draft: { name: string; manager?: string; tea
         const members = [...new Set(t.members.filter(m => m !== t.lead))];
         if (members.length) await tx.insert(s.teamMembers).values(members.map(userId => ({ teamId: team.id, userId })));
         for (const [j, c] of t.cols.entries()) {
-          const [col] = await tx.insert(s.columns).values({ teamId: team.id, name: c.name.trim(), position: j, estimateMinutes: Math.round(c.est * 60) }).returning();
-          if (c.owners.length) await tx.insert(s.columnOwners).values([...new Set(c.owners)].map(userId => ({ columnId: col.id, userId })));
+          await tx.insert(s.columns).values({ teamId: team.id, name: c.name.trim(), position: j, estimateMinutes: Math.round(c.est * 60) });
         }
       }
       return p.id;
